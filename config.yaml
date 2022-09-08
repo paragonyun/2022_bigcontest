@@ -1,0 +1,18 @@
+Loader:
+  data_dir: 'data'
+
+Preprocessor:
+  save_dir: 'prep'
+
+EDA:
+  scatter:
+    point_size: 5
+    x_title: 'data_x'
+    y_titlle: 'data_y'
+  bar:
+    point_size: 5
+    x_title: 'data_x'
+    y_titlle: 'data_y'
+
+Model:
+  
