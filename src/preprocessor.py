@@ -13,9 +13,8 @@ class Preprocessor():
         if os.path.exists(self.save_dir) == False:
             os.makedirs(self.save_dir)
         save_path = os.path.join(self.save_dir, save_file_name)
-        print(f'🚫 Error may be in here')
         prep_df.to_feather(save_path)
-        print(f'✅ prep dataset saved ({save_path})')
+        print(f'✅ prep dataset saved at ({save_path})')
     
     
     def _preprocess(self):
