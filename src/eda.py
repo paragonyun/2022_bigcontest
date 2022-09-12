@@ -5,6 +5,9 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import warnings
+
+import time
+
 warnings.filterwarnings('ignore')
 # import missingno as msno
 
@@ -29,14 +32,24 @@ class EDA():
         print('Checking Distributions...')
 
         for idx, i in tqdm(enumerate(columns)) :
-            if self.df[i].dtype == 'int64' :
+            if self.df[i].dtype == 'int32' :
                 sns.distplot(self.df[i], ax = axes[idx])
 
-            elif self.df[i].dtype == 'float' :
+            elif self.df[i].dtype == 'float32' :
                 sns.distplot(self.df[i], ax=axes[idx])
 
-            elif self.df[i].dtype == 'object' :
-                sns.countplot(self.df[i], ax = axes[idx])
+            elif self.df[i].dtype == 'category' :
+                if len(self.df[i].unique()) > 6 and len(self.df[i].unique()) <= 50 :
+                    sns.countplot(y = self.df[i], ax= axes[idx])
+
+                elif len(self.df[i].unique()) > 50 :
+                    print(f'{i} 칼럼은 너무 많은 범주를 가지고 있습니다. 다른 전처리를 추천드립니다.')
+                    continue
+
+                
+                else :    
+                    sns.countplot(self.df[i], ax = axes[idx])
+                    axes[idx].set_xticklabels(axes[idx].get_xticklabels(),rotation = 30)
         
         print('\nDone!')
 
@@ -134,15 +147,14 @@ class EDA():
 
         plt.show()
 
-'''
-This class is for the EFFICIENT USING of dataframe..! 
-Because our data sometimes takes 10G usage of memory... 
-I think it is very dangerous to our computers..!
-'''
 
-import time
 
 class EDAPreprocessing :
+    '''
+    This class is for the EFFICIENT USING of dataframe..! 
+    Because our data sometimes takes 10G usage of memory... 
+    I think it is very dangerous to our computers..!
+    '''
     def __init__(self, df) :
         self.df = df
 
