@@ -63,7 +63,7 @@ class EDA():
         plt.tight_layout() 
 
         ## 파일의 이름을 입력하면 'distribution of ~~'로 저장
-        plt.savefig(f'../data/Distributions Of {self.filename}.png',
+        plt.savefig(f'../data/Distributions_Of_{self.filename}.png',
                     bbox_inches='tight', pad_inches=0)
 
         plt.show()
@@ -80,7 +80,7 @@ class EDA():
 
         plt.tight_layout() 
 
-        plt.savefig(f'../data/Heat Map Of {self.filename}.png',
+        plt.savefig(f'../data/Heat_Map_Of_{self.filename}.png',
                     bbox_inches='tight', pad_inches=0)
 
         plt.show()
@@ -101,7 +101,7 @@ class EDA():
 
         plt.tight_layout() 
 
-        plt.savefig(f'../data/Missing Values of {self.filename}.png',
+        plt.savefig(f'../data/Missing_Values_of_{self.filename}.png',
                     bbox_inches='tight', pad_inches=0)
 
         plt.show()
@@ -142,7 +142,7 @@ class EDA():
 
         plt.tight_layout() 
 
-        plt.savefig(f'../data/Outliers of {self.filename}.png',
+        plt.savefig(f'../data/Outliers_of_{self.filename}.png',
                     bbox_inches='tight', pad_inches=0)
 
         plt.show()
