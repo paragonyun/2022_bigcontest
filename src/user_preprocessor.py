@@ -4,7 +4,8 @@ import pandas as pd
 ## Emcoders
 from sklearn.preprocessing import  OneHotEncoder, OrdinalEncoder 
 
-## 
+## datetime
+from datetime import datetime
 
 class User_Preprocessor(Preprocessor):
     
@@ -61,35 +62,72 @@ class User_Preprocessor(Preprocessor):
         return output_df
     
     
-    # def __to_categorical(self, df: pd.DataFrame) -> pd.DataFrame:
-    #     # TODO
-    #     # Birth 카테고리컬 화
-    #     ## 이미 생년월일은 datetime type으로 변환된 상태임
-    #     def ___birth_category(self, x) :
-    #         # TODO
-    #         ## 나이 계산한 결과 list를 따로 만들고 그걸 돌면서
-    #         ## 연령대를 넣는 함수를 만들 예정
-    #         return x
+    def __to_categorical(self, df: pd.DataFrame) -> pd.DataFrame:
+        print('카테고리화 시키는 중...')
+        ## Birth 카테고리컬 화
+        # 이미 생년월일은 datetime type으로 변환된 상태임
+        def ___calculate_age(self, x) :
+            this_yaer = datetime.now().year
+            return this_yaer - x.year
 
+        def ___birth_category(self, x) :
+            if 0 <= x < 10 :
+                return '0대'
+            elif 10<= x <20 :
+                return '10대'
+            elif 20<= x <30 :
+                return '20대'
+            elif 30<= x <40 :
+                return '30대'
+            elif 40<= x <50 :
+                return '40대' 
+            elif 50<= x <60 :
+                return '50대'
+            elif 60<= x <70 :
+                return '60대'
+            else :
+                return '70대 이상'
 
+        output_df = df.copy()
+        # 나이로 일단 변환
+        output_df['birth_year'] = output_df['birth_year'].apply(lambda x : ___calculate_age(x))
 
-    #     output_df = df.copy()
+        # 연령대로 변환
+        output_df['birth_year'] = output_df['birth_year'].apply(lambda x : ___birth_category(x))
 
+        ## yearly_income 카테고리 화 (일단 내부 quntile 기준으로 했습니다.)
+        # HACK 그러나 EDA를 하면 알 수 있듯이, 연소득이라는 것이 격차가 매우 커서 이 기준에 대해 다시 생각해보는 게 좋을 것같습니다.
+        q25 = output_df['yearly_income'].quantile(.25)
+        q50 = output_df['yearly_income'].quantile(.50)
+        q75 = output_df['yearly_income'].quantile(.75)       
         
-        
-    #     return output_df
-    
-    
-    # def __sample_prep_3(self, df: pd.DataFrame) -> pd.DataFrame:
+        def ___income_category(self, x) :
+            if x < q25 :
+                return '1'
+            elif q25 <= x <q50 :
+                return '2'
+            elif q50 <= x <q75 :
+                return '3'
+            else :
+                return '4'
+
+        output_df['yearly_income_cat'] = output_df['yearly_income'].apply(lambda x : ___income_category(x))
+
+        return output_df
+
+    # def __to_onehot(self, df: pd.DataFrame) -> pd.DataFrame:
     #     # TODO
     #     print('loan prep3')
+    #     return df
+
+    # def __to_ordinal(self, df: pd.DataFrame) -> pd.DataFrame:
+    #     # TODO
     #     return df
     
     
     def _preprocess(self) -> pd.DataFrame:
-        prep_df = self.__to_datetime(self.raw_df)
+        prep_df = self.__to_datetime(self.raw_df) # self.raw_df 는 preprocessor.py 에서 상속받음
         prep_df = self.__derived_variable_maker(prep_df)
-        
-        prep_df = self.__sample_prep_3(prep_df)
+        prep_df = self.__to_categorical(prep_df)
         # 여기서 index sort & reset 필수
         return prep_df
