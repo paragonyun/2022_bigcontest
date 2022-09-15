@@ -36,6 +36,9 @@ class User_Preprocessor(Preprocessor):
         print('datetime으로 바꾸는 중...')
         output_df = df.copy()
 
+        def ___cuting (x) :
+            return str(x)[:6]
+
         ## datetime 대상이 될 cols를 돌면서
         for i in self.time_cols :
             
@@ -45,8 +48,10 @@ class User_Preprocessor(Preprocessor):
                 continue
             
             elif i == 'company_enter_month' :
-                output_df[i] = pd.to_datetime(output_df[i], format='%Y%m%d', errors='ignore')
+                output_df['company_enter_month'] = output_df['company_enter_month'].apply(lambda x : ___cuting(x))
+                output_df['company_enter_month'] = pd.to_datetime(output_df['company_enter_month'], format='%Y%m')
                 continue
+
 
             ## 해당 column을 datetime type으로 바꿔줌
             output_df[i] = pd.to_datetime(output_df[i])
@@ -131,12 +136,62 @@ class User_Preprocessor(Preprocessor):
 
 
         return output_df
-    
-    
+
+    def __to_ordinal(self, df) :
+        print('순서형인코딩 중...')
+        output_df = df.copy()
+
+        ## 그냥 sklearn의 Ordinal Encoder를 쓰면 순서 상관없이 바꿔버립니다..
+        ## 그래서 수동으로 그냥 함수 작성해서 apply 해줬습니다.
+
+        def ___birth_ordinal(x) :
+            if x == '0대' :
+                return 0
+            elif x == '10대' :
+                return 1
+            elif x == '20대' :
+                return 2
+            elif x == '30대' :
+                return 3
+            elif x == '40대' :
+                return 4
+            elif x == '50대' :
+                return 5
+            elif x == '60대' :
+                return 6
+            else :
+                return 7
+
+        def ___income_ordinal(x) :
+            if x == '1' :
+                return 1 
+            elif x == '2' :
+                return 2
+            elif x == '3' :
+                return 3
+            elif x == '4' :
+                return 4
+
+        output_df['연령대'] = output_df['age_cat'].apply(lambda x : ___birth_ordinal(x))
+        output_df['소득분위'] = output_df['yearly_income_cat'].apply(lambda x : ___income_ordinal(x))
+
+        ## 필요 없는 columns 삭제
+
+        output_df = output_df.drop(['birth_year','yearly_income', 'age','age_cat'], axis=1)
+
+        return output_df
+
+    def __finalize_df(self, input_df: pd.DataFrame) -> pd.DataFrame:
+        output_df = input_df.copy()
+        output_df.reset_index(drop=True, inplace=True)
+        return output_df
+
     def _preprocess(self) -> pd.DataFrame:
         prep_df = self.__to_datetime(self.raw_df) # self.raw_df 는 preprocessor.py 에서 상속받음
-        prep_df = self.__derived_variable_maker(prep_df)
-        prep_df = self.__to_categorical(prep_df)
-        prep_df = self.__to_one_hot(prep_df)
-        # 여기서 index sort & reset 필수
+        prep_df = self.__derived_variable_maker(prep_df) # 파생변수 생성
+        prep_df = self.__to_categorical(prep_df) # 범주화
+        prep_df = self.__to_one_hot(prep_df) # 원핫
+        prep_df = self.__to_ordinal(prep_df) # ordinal
+        prep_df = self.__finalize_df(prep_df) # 인덱스 리셋
+
         return prep_df
