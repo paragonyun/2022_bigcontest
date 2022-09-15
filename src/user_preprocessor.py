@@ -13,8 +13,7 @@ class User_Preprocessor(Preprocessor):
         super().__init__(dataset, prep_config)
         ## onehot encoder로 바뀔 cols
         self.onehot_cols = ['gender','income_type','employment_type','houseown_type',
-                            'personal_rehabilitation_yn','personal_rehabilitation_complete_yn',
-                            'national_health_insurance_type']
+                            'personal_rehabilitation_yn','personal_rehabilitation_complete_yn']
 
         ## ordinal encoder로 바뀔 cols
         self.ordinal_cols = ['birth_year','yearly_income']
@@ -120,19 +119,24 @@ class User_Preprocessor(Preprocessor):
 
         return output_df
 
-    # def __to_onehot(self, df: pd.DataFrame) -> pd.DataFrame:
-    #     # TODO
-    #     print('loan prep3')
-    #     return df
+    def __to_one_hot(self, df) :
+        print('원핫인코딩 중...')
+        output_df = df.copy()
+        for i in self.onehot_cols :
+            ohe = OneHotEncoder(sparse=False)
+            ohe_df = pd.DataFrame(ohe.fit_transform(output_df[[i]]),
+                                columns = [f'{i}_'+ str(col) for col in ohe.categories_[0]])
+            output_df = pd.concat([output_df.drop(columns=[i]),
+                                ohe_df], axis=1)
 
-    # def __to_ordinal(self, df: pd.DataFrame) -> pd.DataFrame:
-    #     # TODO
-    #     return df
+
+        return output_df
     
     
     def _preprocess(self) -> pd.DataFrame:
         prep_df = self.__to_datetime(self.raw_df) # self.raw_df 는 preprocessor.py 에서 상속받음
         prep_df = self.__derived_variable_maker(prep_df)
         prep_df = self.__to_categorical(prep_df)
+        prep_df = self.__to_one_hot(prep_df)
         # 여기서 index sort & reset 필수
         return prep_df
