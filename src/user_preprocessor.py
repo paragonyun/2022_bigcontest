@@ -12,7 +12,7 @@ class User_Preprocessor(Preprocessor):
     def __init__(self, dataset: pd.DataFrame, prep_config: dict):
         super().__init__(dataset, prep_config)
         ## onehot encoder로 바뀔 cols
-        self.onehot_cols = ['gender','income_type','employment_type','houseown_type',
+        self.onehot_cols = ['gender','income_type','employment_type','houseown_type','purpose',
                             'personal_rehabilitation_yn','personal_rehabilitation_complete_yn']
 
         ## ordinal encoder로 바뀔 cols
