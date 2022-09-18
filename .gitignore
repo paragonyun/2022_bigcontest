@@ -133,3 +133,5 @@ data/*.csv
 prep/*.fth
 src/figs/*.png
 *.png
+*.ipynb
+!main_test.ipynb
