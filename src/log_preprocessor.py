@@ -5,24 +5,12 @@ class Log_Preprocessor(Preprocessor):
     
     def __init__(self, dataset: pd.DataFrame, prep_config: dict):
         super().__init__(dataset, prep_config)
-        self.timestamp_col_str = 'timestamp'
-        self.drop_cols_list = ['mp_os', 'mp_app_version', 'date_cd']
-        
-        
-    def __drop_columns(self, input_df: pd.DataFrame) -> pd.DataFrame:
-        output_df = input_df.copy()
-        output_df = output_df.drop(columns=self.drop_cols_list)
-        output_df.reset_index(drop=True, inplace=True)
-        return output_df
+        self.drop_cols = ['mp_os', 'mp_app_version', 'date_cd']
+        self.time_cols = ['timestamp']
+        self.onehot_cols = ['event']
     
     
-    def __to_datetime(self, input_df: pd.DataFrame) -> pd.DataFrame:
-        output_df = input_df.copy()
-        output_df[self.timestamp_col_str] = pd.to_datetime(output_df[self.timestamp_col_str])
-        return output_df
-    
-    
-    # def __remove_outlier(self, input_df: pd.DataFrame) -> pd.DataFrame:
+    # def _remove_outlier(self, input_df: pd.DataFrame) -> pd.DataFrame:
     #     output_df = input_df.copy()
     #     col_list = output_df.columns.to_list()
     #     for col in col_list:
@@ -35,14 +23,14 @@ class Log_Preprocessor(Preprocessor):
     #     return output_df
     
     
-    def __finalize_df(self, input_df: pd.DataFrame) -> pd.DataFrame:
+    def _finalize_df(self, input_df: pd.DataFrame) -> pd.DataFrame:
         output_df = input_df.copy()
         output_df.reset_index(drop=True, inplace=True)
         return output_df
     
-    
+
     def _preprocess(self) -> pd.DataFrame:
-        prep_df = self.__drop_columns(self.raw_df)
-        prep_df = self.__to_datetime(prep_df)
-        prep_df = self.__finalize_df(prep_df)
+        prep_df = super()._drop_columns(self.raw_df, self.drop_cols)
+        prep_df = super()._to_datetime(prep_df, self.time_cols)
+        prep_df = self._finalize_df(prep_df)
         return prep_df
