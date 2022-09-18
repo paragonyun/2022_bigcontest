@@ -4,6 +4,11 @@ Loader:
 Preprocessor:
   save_dir: 'prep'
 
+Matcher:
+  split_year: 2022
+  split_month: 6
+  split_day: 1
+
 EDA:
   scatter:
     point_size: 5
