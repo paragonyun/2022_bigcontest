@@ -104,21 +104,29 @@ class User_Preprocessor(Preprocessor):
         # 연령대로 변환
         output_df['age_cat'] = output_df['age'].apply(lambda x : ___birth_category(x))
 
-        ## yearly_income 카테고리 화 (일단 내부 quntile 기준으로 했습니다.)
-        # HACK 그러나 EDA를 하면 알 수 있듯이, 연소득이라는 것이 격차가 매우 커서 이 기준에 대해 다시 생각해보는 게 좋을 것같습니다.
-        q25 = output_df['yearly_income'].quantile(.25)
-        q50 = output_df['yearly_income'].quantile(.50)
-        q75 = output_df['yearly_income'].quantile(.75)       
-        
+        ## yearly_income 카테고리 화 
         def ___income_category(x) :
-            if x < q25 :
+            if x < 5510000 :
                 return '1'
-            elif q25 <= x <q50 :
+            elif 5510000 <= x <18440000 :
                 return '2'
-            elif q50 <= x <q75 :
+            elif 18440000 <= x <32260000 :
                 return '3'
-            else :
+            elif 32260000 <= x < 42970000 :
                 return '4'
+            elif 42970000 <= x < 50880000 :
+                return '5'
+            elif 50880000 <= x < 61690000 :
+                return '6'
+            elif 61690000 <= x < 75790000 :
+                return '7'
+            elif 75790000 <= x < 96130000 :
+                return '8'
+            elif 96130000 <= x < 128850000 :
+                return '9'
+            elif 128850000 <= x < 233790000 :
+                return '10'
+
 
         output_df['yearly_income_cat'] = output_df['yearly_income'].apply(lambda x : ___income_category(x))
 
@@ -171,6 +179,18 @@ class User_Preprocessor(Preprocessor):
                 return 3
             elif x == '4' :
                 return 4
+            elif x == '5' :
+                return 5
+            elif x == '6' :
+                return 6
+            elif x == '7' :
+                return 7 
+            elif x == '8' :
+                return 8
+            elif x == '9' :
+                return 9
+            elif x == '10' :
+                return 10
 
         output_df['연령대'] = output_df['age_cat'].apply(lambda x : ___birth_ordinal(x))
         output_df['소득분위'] = output_df['yearly_income_cat'].apply(lambda x : ___income_ordinal(x))
