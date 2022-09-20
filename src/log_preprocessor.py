@@ -19,6 +19,13 @@ class Log_Preprocessor(Preprocessor):
         return output_df
     
     
+    def _sort_by_timestamp(self, input_df: pd.DataFrame) -> pd.DataFrame:
+        print('시간축을 기준으로 정렬 중...')
+        output_df = input_df.copy()
+        output_df = output_df.sort_values(by=self.time_cols[0])
+        return output_df
+    
+    
     def _finalize_df(self, input_df: pd.DataFrame) -> pd.DataFrame:
         output_df = input_df.copy()
         output_df.reset_index(drop=True, inplace=True)
@@ -29,5 +36,6 @@ class Log_Preprocessor(Preprocessor):
         prep_df = super()._drop_columns(self.raw_df, self.drop_cols)
         prep_df = super()._to_datetime(prep_df, self.time_cols)
         prep_df = self._to_categorical(prep_df)
+        prep_df = self._sort_by_timestamp(prep_df)
         prep_df = self._finalize_df(prep_df)
         return prep_df
