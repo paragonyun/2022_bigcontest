@@ -22,6 +22,7 @@ Y라는 군집화 알고리즘이 A집단을 1로 분류하고 B 집단을 0으�
 이전 알고리즘의 군집과 Feature를 고려하면서 군집의 Label을 붙이게 하는 방법이 생각나긴 하나
 이는 다같이 생각해볼 문제인 것같습니다.
 '''
+from os import link
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,6 +32,7 @@ warnings.filterwarnings('ignore')
 
 from sklearn.cluster import KMeans, MeanShift, DBSCAN, estimate_bandwidth
 from sklearn.mixture import GaussianMixture
+from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 from sklearn.metrics import silhouette_samples, silhouette_score
 
 # from yellowbrick.cluster import KElbowVisualizer
@@ -43,7 +45,8 @@ class Clustering ():
         self.cluster_models = {'KM' : self._KMeans_clustering,
                                 'MS' : self._MeanShift_clustering,
                                 'DB' : self._DBSCAN_clustering,
-                                'GM' : self._GaussianMixture_clustering}
+                                'GM' : self._GaussianMixture_clustering,
+                                'HI' : self._Hierachical_clustering}
 
         self.fin_df = df.copy()
 
@@ -84,12 +87,12 @@ class Clustering ():
         plt.title('K-Means Clustering Visualization')
         plt.legend()
 
-        plt.savefig(f'../data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
+        plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
                     bbox_inches='tight', pad_inches=0)
 
         plt.show()
 
-        self.fin_df['KMeans'] = model.labels_
+        self.fin_df['KM'] = model.labels_
 
 
     def _MeanShift_clustering(self, input_df) :
@@ -119,12 +122,12 @@ class Clustering ():
         plt.title('MeanShift Clustering Visualization')
         plt.legend()
 
-        plt.savefig(f'../data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
+        plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
                     bbox_inches='tight', pad_inches=0)
 
         plt.show()
 
-        self.fin_df['MeanShift'] = labels
+        self.fin_df['MS'] = labels
 
         
 
@@ -153,12 +156,12 @@ class Clustering ():
 
         plt.title('Gaussian Mixture Clustering Visualization')
         plt.legend()
-        plt.savefig(f'../data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
+        plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
                     bbox_inches='tight', pad_inches=0)
 
         plt.show()
 
-        self.fin_df['GaussianMixture'] = labels
+        self.fin_df['GM'] = labels
 
 
     def _DBSCAN_clustering(self, input_df) :
@@ -186,14 +189,39 @@ class Clustering ():
                         y = pca_df.loc[marker_i, 'y_axis'],
                         label = f'Cluster {i}')
 
-        plt.title('Gaussian Mixture Clustering Visualization')
+        plt.title('DBSCAN Clustering Visualization')
         plt.legend()
-        plt.savefig(f'../data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
+        plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
                     bbox_inches='tight', pad_inches=0)
 
         plt.show()
 
-        self.fin_df['DBSCAN'] = labels
+        self.fin_df['DB'] = labels
+
+    def _Hierachical_clustering(self, input_df) :
+        print('계층적 군집화 중...')
+
+        output_df = input_df.copy()
+
+        model = linkage(y = output_df, method='complete' ,metric='euclidean')
+
+        labels = fcluster(model, t = 3, criterion='distance')
+
+        plt.figure(figsize=(12,6))
+        dendrogram(model, leaf_rotation = 90)
+        plt.title('Hierachical Clustering Visualization')
+        plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png')
+        
+        plt.show()
+        
+
+        self.fin_df['HI'] = labels
+
+
+    def _calculate_scores(self) :
+        for i in self.cluster_models :
+            score_ = silhouette_score(self.df, self.fin_df[i])
+            print(f'Silhouette Score of {i} : {score_:.2f}')
         
 
     def run(self) :
@@ -201,5 +229,7 @@ class Clustering ():
         self.cluster_models['MS'](self.df)
         self.cluster_models['DB'](self.df)
         self.cluster_models['GM'](self.df)
+        self.cluster_models['HI'](self.df)
+        self._calculate_scores()
 
         return self.fin_df
