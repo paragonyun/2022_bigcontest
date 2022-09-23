@@ -112,8 +112,8 @@ class Clustering ():
         km = KMeans()
         gm = GaussianMixture()
 
-        km_viz = KElbow(km, k = (2, 15), metric='silhouette')
-        gm_viz = KElbow(gm, k = (2, 15), metric='calinski_harabasz', force_model = True)
+        km_viz = KElbow(km, k = (2, 8), metric='silhouette')
+        gm_viz = KElbow(gm, k = (2, 8), metric='calinski_harabasz', force_model = True)
 
         km_viz.fit(elbow_df)
         gm_viz.fit(elbow_df)
@@ -291,11 +291,11 @@ class Clustering ():
         
         self._checking_elbows(scaled_df)
         
-        self.cluster_models['KM'](self.df)
-        self.cluster_models['MS'](self.df)
-        self.cluster_models['DB'](self.df)
-        self.cluster_models['GM'](self.df)
-        self.cluster_models['HI'](self.df)
+        self.cluster_models['KM'](scaled_df)
+        self.cluster_models['MS'](scaled_df)
+        self.cluster_models['DB'](scaled_df)
+        self.cluster_models['GM'](scaled_df)
+        self.cluster_models['HI'](scaled_df)
         
         self._calculate_scores()
 
