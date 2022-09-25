@@ -129,6 +129,7 @@ dmypy.json
 .pyre/
 
 # Data files
+*.yaml
 *.csv
 *.fth
 *.png
