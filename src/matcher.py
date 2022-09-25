@@ -28,7 +28,7 @@ class Matcher():
     def _split_dataset(self, input_df: pd.DataFrame, time_col: str) -> tuple:
         print('Train(Valid)과 Test로 나누는 중...')
         train_valid_df = input_df[input_df[time_col] < self.split_timestamp].reset_index(drop=True)
-        test_df = input_df[input_df[time_col] < self.split_timestamp].reset_index(drop=True)
+        test_df = input_df[input_df[time_col] >= self.split_timestamp].reset_index(drop=True)
         return train_valid_df, test_df
     
     

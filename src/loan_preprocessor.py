@@ -19,6 +19,6 @@ class Loan_Preprocessor(Preprocessor):
     def _preprocess(self) -> pd.DataFrame:
         prep_df = super()._drop_columns(self.raw_df, self.drop_cols)
         prep_df = super()._to_datetime(prep_df, self.time_cols)
-        prep_df = super()._drop_missing_rows(prep_df)
+        #prep_df = super()._drop_missing_rows(prep_df)
         prep_df = self._finalize_df(prep_df)
         return prep_df
