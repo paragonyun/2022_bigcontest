@@ -1,4 +1,5 @@
 from tkinter import Grid
+import scipy
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics import f1_score
