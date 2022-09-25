@@ -49,7 +49,7 @@ from yellowbrick.cluster import KElbow
 
 from sklearn.decomposition import PCA
 
-from sklearn.preprocessing import RobustScaler, PowerTransformer
+from sklearn.preprocessing import RobustScaler, PowerTransformer, StandardScaler, MinMaxScaler
 
 class Clustering ():
     def __init__ (self, df : pd.DataFrame) :
@@ -74,6 +74,7 @@ class Clustering ():
         '''
         def clean_dataset(df):
             assert isinstance(df, pd.DataFrame), "df needs to be a pd.DataFrame"
+            df.replace([np.inf, -np.inf], np.nan, inplace=True)
             df.dropna(inplace=True)
             indices_to_keep = ~df.isin([np.nan, np.inf, -np.inf]).any(1)
             return df[indices_to_keep].astype(np.float64)
@@ -89,11 +90,10 @@ class Clustering ():
         scale_obj = clean_dataset(scale_obj).reset_index()
         
 
-        rs = RobustScaler()
-        pt = PowerTransformer()
+        ss = StandardScaler()
 
-        rs_ = rs.fit_transform(scale_obj)
-        transed = pt.fit_transform(rs_)
+        transed = ss.fit_transform(scale_obj)
+        
 
         print('스케일링 후 : ', scale_obj.shape)
 
