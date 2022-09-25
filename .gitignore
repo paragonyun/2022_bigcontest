@@ -129,9 +129,8 @@ dmypy.json
 .pyre/
 
 # Data files
-data/*.csv
-prep/*.fth
-src/figs/*.png
+*.csv
+*.fth
 *.png
 *.ipynb
 !main_test.ipynb
