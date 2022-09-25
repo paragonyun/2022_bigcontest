@@ -196,7 +196,7 @@ class User_Preprocessor(Preprocessor):
         output_df['소득분위'] = output_df['yearly_income_cat'].apply(lambda x : _income_ordinal(x))
 
         ## 필요 없는 columns 삭제
-        output_df = output_df.drop(['birth_year','yearly_income', 'age','age_cat'], axis=1)
+        output_df = output_df.drop(['birth_year', 'age','age_cat'], axis=1)
 
         return output_df
 
