@@ -38,8 +38,10 @@ class Matcher():
     
     
     def _match_loan_user(self, loan_df: pd.DataFrame) -> List[pd.DataFrame]:
-        print('Loan_Cofix와 User 매칭중...')
-        matched_df = loan_df.merge(self.user_df, on='application_id')
+        print('Loan_Cofix와 User를 merge중...')
+        # matched_df = loan_df.merge(self.user_df, on='application_id')
+        # matched_df = pd.merge(loan_df,self.user_df, how='outer', on='application_id')
+        matched_df = pd.merge(loan_df, self.user_df, left_on='application_id', right_on='application_id')
         return matched_df
     
         
