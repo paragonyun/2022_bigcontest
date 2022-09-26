@@ -106,6 +106,7 @@ class User_Preprocessor(Preprocessor):
 
         ## yearly_income 카테고리 화 
         def _income_category(x) :
+            
             if x < 5510000 :
                 return '1'
             elif 5510000 <= x <18440000 :
@@ -124,8 +125,11 @@ class User_Preprocessor(Preprocessor):
                 return '8'
             elif 96130000 <= x < 128850000 :
                 return '9'
-            elif 128850000 <= x < 233790000 :
+            elif 128850000 <= x  :
                 return '10'
+
+            else :
+                return '0'
 
 
         output_df['yearly_income_cat'] = output_df['yearly_income'].apply(lambda x : _income_category(x))
@@ -191,6 +195,8 @@ class User_Preprocessor(Preprocessor):
                 return 9
             elif x == '10' :
                 return 10
+            else :
+                return 0
 
         output_df['연령대'] = output_df['age_cat'].apply(lambda x : _birth_ordinal(x))
         output_df['소득분위'] = output_df['yearly_income_cat'].apply(lambda x : _income_ordinal(x))
