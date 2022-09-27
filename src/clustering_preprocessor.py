@@ -16,9 +16,20 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Po
 
 from sklearn.decomposition import PCA
 
+## Feature Selection
+from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif, RFE
+from sklearn.ensemble import ExtraTreesClassifier
+
+
 
 class  ClusteringPreprocessor() :
-    def __init__ (self, dataset : pd.DataFrame) :
+    ## TODO
+    '''
+    parameter로 True 값 전달하면 그에 맞춰서 Feature Selection을 하든 
+    Feature Extractin을 하든 어쨋든 그게 가능하게 만들기
+    '''
+
+    def __init__ (self, dataset : pd.DataFrame, selection=False, extraction=False) :
         self.df = dataset
         self.scalers = [StandardScaler, MinMaxScaler, RobustScaler, PowerTransformer]
         
@@ -32,6 +43,11 @@ class  ClusteringPreprocessor() :
                                 'income_per_credit', 'existing_loan_percent']
     
         self.prep_scaled_dfs = [] ## DataFrame을 담는 List
+
+
+        self.selection = selection ## True or False로 갈 거임
+        self.extraction = extraction ## True or False로 갈 거임
+
 
     def _basic_preprocessor(self, df) -> pd.DataFrame : 
         print('전처리 시작...')
@@ -64,6 +80,15 @@ class  ClusteringPreprocessor() :
         # 기대출비율 : 기대출금액 / 연소득
         output_df['existing_loan_percent'] = output_df['existing_loan_amt'] / output_df['yearly_income']
 
+        ## 결측치 전부 drop
+        print('결측치 제거 전 : ', output_df.isnull().sum().sum())
+        output_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        output_df.dropna(inplace=True)
+        print('결측치 제거 후 : ', output_df.isnull().sum().sum())
+
+        output_df = output_df.reset_index(drop=True)
+
+
         ## onehot 인코딩
         for i in self.onehot_cols :
             ohe = OneHotEncoder(sparse=False)
@@ -72,11 +97,11 @@ class  ClusteringPreprocessor() :
             output_df = pd.concat([output_df.drop(columns=[i]),
                                 ohe_df], axis=1)
 
-        ## 결측치 전부 drop
-        print('결측치 제거 전 : ', output_df.isnull().sum().sum())
-        output_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-        output_df.dropna(inplace=True)
-        print('결측치 제거 후 : ', output_df.isnull().sum().sum())
+        # ## 결측치 전부 drop
+        # print('결측치 제거 전 : ', output_df.isnull().sum().sum())
+        # output_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        # output_df.dropna(inplace=True)
+        # print('결측치 제거 후 : ', output_df.isnull().sum().sum())
 
         output_df = output_df.reset_index(drop=True)
 
@@ -106,6 +131,61 @@ class  ClusteringPreprocessor() :
         return self.prep_scaled_dfs
 
 
+    def _feature_selection(self, df_lst) : ## scaled된 DF List 를 가지고 Selection 측정
+        output_df = df_lst.copy()
+
+        return
+
+    def _feature_extraction(self, df_lst) :## scaled된 DF List 를 가지고 Extraction 수행
+        extract_dfs = []
+
+        df = df_lst[0]
+
+        cat_1 = ['age', 'service_year']
+
+        cat_2 = [i for i in df.columns if i.startswith('employment_type_')]
+
+        cat_3 = ['yearly_income']
+
+        cat_4 = ['credit_score','existing_loan_cnt','existing_loan_amt']
+        
+        cat_5 = ['desired_amount']
+
+
+        for i in df.columns :
+            if i.startswith('gender') :
+                cat_1.append(i)
+            
+            elif i.startswith('income_type') or i.startswith('houseown_type'):
+                cat_3.append(i)
+            
+            elif i.startswith('personal_rehabilitation_') :
+                cat_4.append(i)
+
+            elif i.startswith('purpose') :
+                cat_5.append(i)
+        
+        pca_cols = [cat_1, cat_2, cat_3, cat_4, cat_5]
+
+        for df in df_lst :
+            extract_df = pd.DataFrame()
+
+            for idx, obj_col in enumerate(pca_cols) :
+                pca = PCA(n_components=0.8)
+                transformed_idx = pca.fit_transform(df[obj_col])
+                pca_idx_df = pd.DataFrame(transformed_idx, 
+                                        columns = [str(obj_col) + str(idx) + '_' + str(i) for i in range(len(transformed_idx[0]))])
+            
+                
+                extract_df = pd.concat([extract_df, pca_idx_df], axis=1)
+
+            extract_dfs.append(extract_df)
+        
+        return extract_dfs
+
+
+
+
 
     def test_run(self) :
         '''
@@ -125,7 +205,7 @@ class  ClusteringPreprocessor() :
 
     def _visualize(self, df_lst : list) :
         print('시각화를 시작합니다...')
-        viz_dfs = self.prep_scaled_dfs
+        viz_dfs = df_lst
 
         for viz_df, scaler in zip(viz_dfs, self.scalers) :
             scaler_name = str(scaler).split('.')[-1][:-2]
@@ -156,8 +236,12 @@ class  ClusteringPreprocessor() :
             ax2.scatter(xs = pca_3_df.loc[:, 'x_axis'], ys = pca_3_df.loc[:, 'y_axis'], zs = pca_3_df.loc[:, 'z_axis'],
                                 alpha=0.4)
             ax2.set_title(f'3D Scatter Plot of  {scaler_name}')
+            
+            if self.extraction :
+                plt.savefig(f'./data/Extraction_Result_of_{scaler_name}.png')
 
-            plt.savefig(f'./data/PCA_Result_of_{scaler_name}.png')
+            else : 
+                plt.savefig(f'./data/Normal_Result_of_{scaler_name}.png')
 
             plt.show()
         
@@ -172,9 +256,26 @@ class  ClusteringPreprocessor() :
         print(f'총 {len(self.prep_scaled_dfs)}개의 DataFrame이 나왔습니다. shape : {self.prep_scaled_dfs[0].shape}')
         print(self.prep_scaled_dfs[0].info())
 
-        self._visualize(prep_scaled_df_lst)
+        if self.extraction :
+            print('Extraction을 시작합니다...')
+            extract_dfs = self._feature_extraction(prep_scaled_df_lst)
+            self._visualize(extract_dfs)
+
+        else :
+            self._visualize(prep_scaled_df_lst)
 
         ## 메모리 절약을 위해... 지워줌..!
         del prep_scaled_df_lst
 
         print('Done')
+
+    '''
+    Example
+    1. 그냥 전처리 후의 시각화
+    clus = ClusteringPreprocessor(df)
+    clus.run()
+
+    2. Extracction 이후의 시각화
+    clus = ClusteringPreprocessor(df, extraction=True)
+    clus.run()
+    '''
