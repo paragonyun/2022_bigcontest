@@ -17,9 +17,13 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, Po
 from sklearn.decomposition import PCA
 
 ## Feature Selection
-from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif, RFE
-from sklearn.ensemble import ExtraTreesClassifier
+# from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif, RFE
+# from sklearn.ensemble import ExtraTreesClassifier
 
+
+## Feature Selection
+from FRUFS import FRUFS
+from lightgbm import LGBMClassifier, LGBMRegressor
 
 
 class  ClusteringPreprocessor() :
@@ -132,9 +136,44 @@ class  ClusteringPreprocessor() :
 
 
     def _feature_selection(self, df_lst) : ## scaled된 DF List 를 가지고 Selection 측정
-        output_df = df_lst.copy()
+        '''
+        기존의 Selection 기법들은 모두 Supervised 기법이기 때문에, 
+        Unsupervised 기법인 FRUFS를 실험적으로 사용합니다.
+        참고링크 : https://www.deepwizai.com/projects/how-to-perform-unsupervised-feature-selection-using-supervised-algorithms
+        [PyPi] https://pypi.org/project/FRUFS/
+        [Kaggle Notebook] https://www.kaggle.com/code/marketneutral/frufs-unsupervised-selection
+        '''
+        df = df_lst[0]
 
-        return
+        select_dfs = []
+
+        cat_cols_after_prep = []
+
+        ## Categorical Data 지정
+        for i in self.onehot_cols :
+            for prep_cols in df.columns :
+                if prep_cols.startswith(i) :
+                    cat_cols_after_prep.append(prep_cols)
+
+        for df in df_lst :
+            model = FRUFS(model_r = LGBMRegressor(random_state=42),
+                            model_c = LGBMClassifier(random_state=42),
+                            categorical_features = cat_cols_after_prep,
+                            random_state = 42,
+                            k = 10,   ## k개까지 측정합니다.
+                            n_jobs = -1)
+            
+            # fit transform은 k개로 이루어진 df를 return 합니다.
+            selected_df = model.fit_transform(df)
+
+            print('Selected Columns\n', selected_df.columns)
+
+            # 이거 하면 XGBoost 스타일로 그려줍니다. 지금은 필요 없을 거 같아서 Pass
+            # model.feature_importance()
+
+            select_dfs.append(selected_df)
+
+        return select_dfs
 
     def _feature_extraction(self, df_lst) :## scaled된 DF List 를 가지고 Extraction 수행
         extract_dfs = []
@@ -182,10 +221,6 @@ class  ClusteringPreprocessor() :
             extract_dfs.append(extract_df)
         
         return extract_dfs
-
-
-
-
 
     def test_run(self) :
         '''
@@ -240,6 +275,9 @@ class  ClusteringPreprocessor() :
             if self.extraction :
                 plt.savefig(f'./data/Extraction_Result_of_{scaler_name}.png')
 
+            elif self.selection :
+                plt.savefig(f'./data/Selection_result_of_{scaler_name}.png')
+
             else : 
                 plt.savefig(f'./data/Normal_Result_of_{scaler_name}.png')
 
@@ -261,6 +299,11 @@ class  ClusteringPreprocessor() :
             extract_dfs = self._feature_extraction(prep_scaled_df_lst)
             self._visualize(extract_dfs)
 
+        elif self.selection :
+            print('Selection을 시작합니다...')
+            select_dfs = self._feature_selection(prep_scaled_df_lst) 
+            self._visualize(select_dfs)
+
         else :
             self._visualize(prep_scaled_df_lst)
 
@@ -277,5 +320,9 @@ class  ClusteringPreprocessor() :
 
     2. Extracction 이후의 시각화
     clus = ClusteringPreprocessor(df, extraction=True)
+    clus.run()
+
+    3. Selection 이후의 시각화
+    clus = ClusteringPreprocessor(df, selection=True)
     clus.run()
     '''
