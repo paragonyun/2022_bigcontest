@@ -284,7 +284,7 @@ class  ClusteringPreprocessor() :
             plt.show()
         
 
-    def run(self) :
+    def run(self)  :
         prep_df = self._basic_preprocessor(self.df)
 
         prep_scaled_df_lst = self._scaling(prep_df)
@@ -292,26 +292,36 @@ class  ClusteringPreprocessor() :
         print('Scaling 완료')
 
         print(f'총 {len(self.prep_scaled_dfs)}개의 DataFrame이 나왔습니다. shape : {self.prep_scaled_dfs[0].shape}')
-        print(self.prep_scaled_dfs[0].info())
+        print(self.prep_scaled_dfs[0].info(),'\n\n')
 
         if self.extraction :
             print('Extraction을 시작합니다...')
             extract_dfs = self._feature_extraction(prep_scaled_df_lst)
             self._visualize(extract_dfs)
 
+            print('Extract 결과 DF List를 반환합니다.')
+    
+            del prep_scaled_df_lst
+
+            return extract_dfs
+
         elif self.selection :
             print('Selection을 시작합니다...')
             select_dfs = self._feature_selection(prep_scaled_df_lst) 
             self._visualize(select_dfs)
 
+            print('Selection 결과 DF List를 반환합니다.')
+
+            del prep_scaled_df_lst
+
+            return select_dfs
+
         else :
             self._visualize(prep_scaled_df_lst)
 
-        ## 메모리 절약을 위해... 지워줌..!
-        del prep_scaled_df_lst
 
-        print('Done')
-
+            print('일반 전처리 결과 DF List를 반환합니다.')
+            return prep_scaled_df_lst
     '''
     Example
     1. 그냥 전처리 후의 시각화
