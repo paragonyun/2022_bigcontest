@@ -1,37 +1,6 @@
-'''
-군집화는 일단 Scaling이 되고 나서 진행됐다는 것을 가정합니다
-때문에 여기서 사용하는 DataFrame은 Scaling이 된 상태의 DataFrame 입니다!
-데이터마다 다르지만 저희 데이터는 Scaling이 필요한 데이터라고 판단했습니다
-참고링크 : https://stats.stackexchange.com/questions/89809/is-it-important-to-scale-data-before-clustering
+# TODO
+# 1. df 하나만 보는 거 list로 바꾸기
 
-Clustering 목적 외에도 시각화를 PCA 압축을 통해 하는데, 이를 위해선 Scaling이 필요합니다.
-
-추가적으로, 군집화의 앙상블이 생각보다 그렇게 자주 사용하는 기법은 아니라고 합니다.
-하라면 할 수 있겠지만 잘 하지는 않는다고 하네요. 이유를 생각해보면 비지도학습이라
-
-X라는 군집화 알고리즘이 A집단을 0으로 분류하고 B 집단을 1로 분류하고
-Y라는 군집화 알고리즘이 A집단을 1로 분류하고 B 집단을 0으로 분류했다고 해서 이게 
-의미가 없다는 것입니다. 
-
-군집화의 결과로 뱉은 값은 비슷하다고 판단한 데이터들을 잘 모았다는 것이지 잘 "맞췄다"에 초점을 맞춘 것이 아니기 때문입니다.
-
-군집이 label로 뱉은 값들을 단순히 보팅하면 같은 데이터를 잘 묶었음에도 불구하고
-"표시한" 게 다르다는 이유로 Voting이 꼬일 수 있습니다.
-
-해결 방법으로는 어차피 아래의 코드는 KMeans하고 붙이고~ MS하고 붙이고~ 하는 방식이라 
-이전 알고리즘의 군집과 Feature를 고려하면서 군집의 Label을 붙이게 하는 방법이 생각나긴 하나
-이는 다같이 생각해볼 문제인 것같습니다.
-'''
-
-'''
-Todo List
-1. inf값 추적
-2. Processing print
-3. 최적의 군집 형태 잡아두기
-4. 시간이 많이 걸리는 것 같은 곳 
-    (1) 군집 개수 추정
-    (2) Bandwidth 추정
-'''
 from os import link
 import pandas as pd
 import numpy as np
@@ -52,7 +21,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import RobustScaler, PowerTransformer, StandardScaler, MinMaxScaler
 
 class Clustering ():
-    def __init__ (self, df : pd.DataFrame) :
+    def __init__ (self, df : pd.DataFrame, scaled = False, num_clus = None) :
         self.df = df
         self.cluster_models = {'KM' : self._KMeans_clustering,
                                 'MS' : self._MeanShift_clustering,
@@ -61,6 +30,9 @@ class Clustering ():
                                 'HI' : self._Hierachical_clustering}
 
         self.fin_df = df.copy()
+
+        self.scaled = scaled
+        self.num_clus = num_clus
 
         self.drop_cols = ['application_id','user_id','insert_time','company_enter_month']
 
@@ -125,7 +97,7 @@ class Clustering ():
         print('K-Means로 군집화 수행 중...')
         output_df = input_df.copy()
         
-        model = KMeans(n_clusters = km_best_elbow, init = 'k-means++')
+        model = KMeans(n_clusters = self.num_clus, init = 'k-means++')
         model.fit_predict(output_df)
 
         ## 이 output_df에 저장된 결과로 각 모델별로 시각화도 시키고
@@ -197,7 +169,7 @@ class Clustering ():
         print('Gaussian Mixture로 군집화 중...')
         output_df = input_df.copy()
 
-        model = GaussianMixture(n_components = gm_best_elbow)
+        model = GaussianMixture(n_components = self.num_clus)
         labels = model.fit_predict(output_df)
 
         output_df['GM'] = labels
@@ -287,16 +259,28 @@ class Clustering ():
         
 
     def run(self) :
-        scaled_df = self._scaling(self.df)
-        
-        self._checking_elbows(scaled_df)
-        
-        self.cluster_models['KM'](scaled_df)
-        self.cluster_models['MS'](scaled_df)
-        self.cluster_models['DB'](scaled_df)
-        self.cluster_models['GM'](scaled_df)
-        self.cluster_models['HI'](scaled_df)
-        
-        self._calculate_scores()
+        if self.scaled :
+            self.cluster_models['KM'](self.df)
+            self.cluster_models['MS'](self.df)
+            self.cluster_models['DB'](self.df)
+            self.cluster_models['GM'](self.df)
+            self.cluster_models['HI'](self.df)
+            
+            self._calculate_scores()
 
-        return self.fin_df
+            return self.fin_df
+
+        else :
+            scaled_df = self._scaling(self.df)
+            
+            # self._checking_elbows(scaled_df)
+            
+            self.cluster_models['KM'](scaled_df)
+            self.cluster_models['MS'](scaled_df)
+            self.cluster_models['DB'](scaled_df)
+            self.cluster_models['GM'](scaled_df)
+            self.cluster_models['HI'](scaled_df)
+            
+            self._calculate_scores()
+
+            return self.fin_df
