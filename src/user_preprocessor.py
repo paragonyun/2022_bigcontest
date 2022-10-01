@@ -24,14 +24,6 @@ class User_Preprocessor(Preprocessor):
         ## 범주화될 cols
         self.categorical_cols = ['birth_year','yearly_income']
 
-    '''
-    전처리 순서 : 
-    1. datetime type 대상 cols 전처리
-    2. 파생변수 만들기
-    3. 범주화 대상 cols 범주화 전처리
-    4. OneHot Encoder 대상 cols 전처리
-    5. Ordinal Encoder 대상 cols 전처리
-    '''
     def _to_datetime(self, df: pd.DataFrame) -> pd.DataFrame:
         print('datetime으로 바꾸는 중...')
         output_df = df.copy()
@@ -67,6 +59,23 @@ class User_Preprocessor(Preprocessor):
 
         ## 기대출비율 : 기대출금액 / 연소득
         output_df['existing_loan_percent'] = output_df['existing_loan_amt'] / output_df['yearly_income']
+
+        return output_df
+
+    def _value_change(self, df : pd.DataFrame) :
+        output_df = df.copy()
+        value_dict = {
+            'LIVING' : '생활비',
+            'SWITCHLOAN' : '대환대출',
+            'BUSINESS' : '사업자금',
+            'ETC' : '기타',
+            'HOUSEDEPOSIT' : '전월세보증금',
+            'BUYHOUSE' : '주택구입',
+            'INVEST' : '투자',
+            'BUYCAR' : '자동차구입'
+        }
+
+        output_df['purpose'] = output_df['purpose'].replace(value_dict)
 
         return output_df
     
@@ -213,6 +222,7 @@ class User_Preprocessor(Preprocessor):
 
     def _preprocess(self) -> pd.DataFrame:
         prep_df = self._to_datetime(self.raw_df) # self.raw_df 는 preprocessor.py 에서 상속받음
+        prep_df = self._value_change(prep_df) ## purpose 내부 값 변환ㄴ
         prep_df = self._derived_variable_maker(prep_df) # 파생변수 생성
         prep_df = self._to_categorical(prep_df) # 범주화
         prep_df = self._to_one_hot(prep_df) # 원핫
