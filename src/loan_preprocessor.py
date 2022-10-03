@@ -6,8 +6,8 @@ class Loan_Preprocessor(Preprocessor):
     def __init__(self, dataset: pd.DataFrame, prep_config: dict):
         super().__init__(dataset, prep_config)
         self.time_cols = ['loanapply_insert_time']
-        #self.drop_cols = ['product_id']
         self.drop_cols = []
+        self.drop_missing_row_subset = ['loan_limit', 'loan_rate']
     
     
     def _finalize_df(self, input_df: pd.DataFrame) -> pd.DataFrame:
@@ -19,6 +19,6 @@ class Loan_Preprocessor(Preprocessor):
     def _preprocess(self) -> pd.DataFrame:
         prep_df = super()._drop_columns(self.raw_df, self.drop_cols)
         prep_df = super()._to_datetime(prep_df, self.time_cols)
-        #prep_df = super()._drop_missing_rows(prep_df)
+        prep_df = super()._drop_missing_rows(prep_df, self.drop_missing_row_subset)
         prep_df = self._finalize_df(prep_df)
         return prep_df

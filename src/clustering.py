@@ -104,22 +104,43 @@ class Clustering ():
         ## 나중에 이 결과들을 모아서 Hard Voting도 시킬 거임
         output_df['KMeans'] = model.labels_
 
-        pca = PCA(n_components=2)
-        pca_transformed = pca.fit_transform(output_df.drop(['KMeans'], axis=1))
+        fig = plt.figure(figsize=(12,6))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122, projection='3d')
 
-        pca_df = pd.DataFrame({'x_axis' : pca_transformed[:,0],
-                                'y_axis' : pca_transformed[:,1],
+        pca_2 = PCA(n_components=2)
+        pca_2_transformed = pca_2.fit_transform(output_df.drop(['KMeans'], axis=1))
+
+        pca_2_df = pd.DataFrame({'x_axis' : pca_2_transformed[:,0],
+                                'y_axis' : pca_2_transformed[:,1],
                                 'Cluster' : output_df['KMeans']})
-        
 
-        for i in range(len(pca_df['Cluster'].unique())) :
-            marker_i = pca_df[pca_df['Cluster'] == i].index
-            plt.scatter(x = pca_df.loc[marker_i, 'x_axis'],
-                        y = pca_df.loc[marker_i, 'y_axis'],
+        pca_3 = PCA(n_components=3)
+        pca_3_transformed = pca_3.fit_transform(output_df.drop(['KMeans'], axis=1))
+        pca_3_df = pd.DataFrame({'x_axis' : pca_3_transformed[:, 0],
+                        'y_axis' : pca_3_transformed[:, 1],
+                        'z_axis' : pca_3_transformed[:, 2],
+                        'Cluster' : output_df['KMeans']})
+
+
+        for i in range(len(pca_2_df['Cluster'].unique())) :
+            marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
+            ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
+                        y = pca_2_df.loc[marker_i, 'y_axis'],
                         label = f'Cluster {i}')
 
-        plt.title('K-Means Clustering Visualization')
-        plt.legend()
+        ax1.set_title('K-Means Clustering 2D Visualization')
+        ax1.legend()
+
+        for i in range(len(pca_3_df['Cluster'].unique())) :
+            marker_i = pca_3_df[pca_3_df['Cluster'] == i].index
+            ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
+                        ys= pca_3_df.loc[marker_i, 'y_axis'],
+                        zs =  pca_3_df.loc[marker_i, 'z_axis'],
+                        label = f'Cluster {i}')
+
+        ax2.set_title('K-Means Clustering 3D Visualization')
+        ax2.legend()
 
         plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
                     bbox_inches='tight', pad_inches=0)
@@ -139,22 +160,43 @@ class Clustering ():
         labels = model.fit_predict(output_df)
         output_df['MeanShift'] = labels
 
-        pca = PCA(n_components=2)
-        pca_transformed = pca.fit_transform(output_df.drop(['MeanShift'], axis=1))
+        fig = plt.figure(figsize=(12,6))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122, projection='3d')
 
-        pca_df = pd.DataFrame({'x_axis' : pca_transformed[:,0],
-                                'y_axis' : pca_transformed[:,1],
+        pca_2 = PCA(n_components=2)
+        pca_2_transformed = pca_2.fit_transform(output_df.drop(['MeanShift'], axis=1))
+
+        pca_2_df = pd.DataFrame({'x_axis' : pca_2_transformed[:,0],
+                                'y_axis' : pca_2_transformed[:,1],
                                 'Cluster' : output_df['MeanShift']})
-        
 
-        for i in range(len(pca_df['Cluster'].unique())) :
-            marker_i = pca_df[pca_df['Cluster'] == i].index
-            plt.scatter(x = pca_df.loc[marker_i, 'x_axis'],
-                        y = pca_df.loc[marker_i, 'y_axis'],
+        pca_3 = PCA(n_components=3)
+        pca_3_transformed = pca_3.fit_transform(output_df.drop(['MeanShift'], axis=1))
+        pca_3_df = pd.DataFrame({'x_axis' : pca_3_transformed[:, 0],
+                        'y_axis' : pca_3_transformed[:, 1],
+                        'z_axis' : pca_3_transformed[:, 2],
+                        'Cluster' : output_df['MeanShift']})
+
+
+        for i in range(len(pca_2_df['Cluster'].unique())) :
+            marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
+            ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
+                        y = pca_2_df.loc[marker_i, 'y_axis'],
                         label = f'Cluster {i}')
 
-        plt.title('MeanShift Clustering Visualization')
-        plt.legend()
+        ax1.set_title('Mean Shift Clustering 2D Visualization')
+        ax1.legend()
+
+        for i in range(len(pca_3_df['Cluster'].unique())) :
+            marker_i = pca_3_df[pca_3_df['Cluster'] == i].index
+            ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
+                        ys= pca_3_df.loc[marker_i, 'y_axis'],
+                        zs =  pca_3_df.loc[marker_i, 'z_axis'],
+                        label = f'Cluster {i}')
+
+        ax2.set_title('Mean Shift Clustering 3D Visualization')
+        ax2.legend()
 
         plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
                     bbox_inches='tight', pad_inches=0)
@@ -174,22 +216,44 @@ class Clustering ():
 
         output_df['GM'] = labels
 
-        pca = PCA(n_components=2)
-        pca_transformed = pca.fit_transform(output_df.drop(['GM'], axis=1))
+        fig = plt.figure(figsize=(12,6))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122, projection='3d')
 
-        pca_df = pd.DataFrame({'x_axis' : pca_transformed[:,0],
-                                'y_axis' : pca_transformed[:,1],
+        pca_2 = PCA(n_components=2)
+        pca_2_transformed = pca_2.fit_transform(output_df.drop(['GM'], axis=1))
+
+        pca_2_df = pd.DataFrame({'x_axis' : pca_2_transformed[:,0],
+                                'y_axis' : pca_2_transformed[:,1],
                                 'Cluster' : output_df['GM']})
-        
 
-        for i in range(len(pca_df['Cluster'].unique())) :
-            marker_i = pca_df[pca_df['Cluster'] == i].index
-            plt.scatter(x = pca_df.loc[marker_i, 'x_axis'],
-                        y = pca_df.loc[marker_i, 'y_axis'],
+        pca_3 = PCA(n_components=3)
+        pca_3_transformed = pca_3.fit_transform(output_df.drop(['GM'], axis=1))
+        pca_3_df = pd.DataFrame({'x_axis' : pca_3_transformed[:, 0],
+                        'y_axis' : pca_3_transformed[:, 1],
+                        'z_axis' : pca_3_transformed[:, 2],
+                        'Cluster' : output_df['GM']})
+
+
+        for i in range(len(pca_2_df['Cluster'].unique())) :
+            marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
+            ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
+                        y = pca_2_df.loc[marker_i, 'y_axis'],
                         label = f'Cluster {i}')
 
-        plt.title('Gaussian Mixture Clustering Visualization')
-        plt.legend()
+        ax1.set_title('Gaussian Mixture Clustering 2D Visualization')
+        ax1.legend()
+
+        for i in range(len(pca_3_df['Cluster'].unique())) :
+            marker_i = pca_3_df[pca_3_df['Cluster'] == i].index
+            ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
+                        ys= pca_3_df.loc[marker_i, 'y_axis'],
+                        zs =  pca_3_df.loc[marker_i, 'z_axis'],
+                        label = f'Cluster {i}')
+
+        ax2.set_title('Gaussian Mixture Clustering 3D Visualization')
+        ax2.legend()
+
         plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
                     bbox_inches='tight', pad_inches=0)
 
@@ -209,22 +273,44 @@ class Clustering ():
 
         output_df['DBSCAN'] = labels
 
-        pca = PCA(n_components=2)
-        pca_transformed = pca.fit_transform(output_df.drop(['DBSCAN'], axis=1))
+        fig = plt.figure(figsize=(12,6))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122, projection='3d')
 
-        pca_df = pd.DataFrame({'x_axis' : pca_transformed[:,0],
-                                'y_axis' : pca_transformed[:,1],
+        pca_2 = PCA(n_components=2)
+        pca_2_transformed = pca_2.fit_transform(output_df.drop(['DBSCAN'], axis=1))
+
+        pca_2_df = pd.DataFrame({'x_axis' : pca_2_transformed[:,0],
+                                'y_axis' : pca_2_transformed[:,1],
                                 'Cluster' : output_df['DBSCAN']})
-        
 
-        for i in range(len(pca_df['Cluster'].unique())) :
-            marker_i = pca_df[pca_df['Cluster'] == i].index
-            plt.scatter(x = pca_df.loc[marker_i, 'x_axis'],
-                        y = pca_df.loc[marker_i, 'y_axis'],
+        pca_3 = PCA(n_components=3)
+        pca_3_transformed = pca_3.fit_transform(output_df.drop(['DBSCAN'], axis=1))
+        pca_3_df = pd.DataFrame({'x_axis' : pca_3_transformed[:, 0],
+                        'y_axis' : pca_3_transformed[:, 1],
+                        'z_axis' : pca_3_transformed[:, 2],
+                        'Cluster' : output_df['DBSCAN']})
+
+
+        for i in range(len(pca_2_df['Cluster'].unique())) :
+            marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
+            ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
+                        y = pca_2_df.loc[marker_i, 'y_axis'],
                         label = f'Cluster {i}')
 
-        plt.title('DBSCAN Clustering Visualization')
-        plt.legend()
+        ax1.set_title('DBSCAN Clustering 2D Visualization')
+        ax1.legend()
+
+        for i in range(len(pca_3_df['Cluster'].unique())) :
+            marker_i = pca_3_df[pca_3_df['Cluster'] == i].index
+            ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
+                        ys= pca_3_df.loc[marker_i, 'y_axis'],
+                        zs =  pca_3_df.loc[marker_i, 'z_axis'],
+                        label = f'Cluster {i}')
+
+        ax2.set_title('DBSCAN Clustering 3D Visualization')
+        ax2.legend()
+
         plt.savefig(f'./data/Clustering_of{sys._getframe(0).f_code.co_name}.png',
                     bbox_inches='tight', pad_inches=0)
 
@@ -261,12 +347,12 @@ class Clustering ():
     def run(self) :
         if self.scaled :
             self.cluster_models['KM'](self.df)
-            self.cluster_models['MS'](self.df)
-            self.cluster_models['DB'](self.df)
+            # self.cluster_models['MS'](self.df)
+            # self.cluster_models['DB'](self.df)
             self.cluster_models['GM'](self.df)
-            self.cluster_models['HI'](self.df)
+            # self.cluster_models['HI'](self.df)
             
-            self._calculate_scores()
+            # self._calculate_scores()
 
             return self.fin_df
 
