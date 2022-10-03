@@ -8,7 +8,9 @@ class mice():
         self.df = df
         
     def mice_1(self):
-        mice_df = self.df[['credit_score','연령대', '소득분위','personal_rehabilitation_yn_0.0', 'personal_rehabilitation_yn_1.0',
+        df2 = self.df
+        
+        mice_df = df2[['credit_score','연령대', '근속정도' ,'yearly_income','personal_rehabilitation_yn_0.0', 'personal_rehabilitation_yn_1.0',
        'personal_rehabilitation_yn_nan','existing_loan_cnt', 'existing_loan_amt']]
         
         imputer = IterativeImputer(imputation_order='ascending',max_iter=5,random_state=42)
@@ -17,15 +19,19 @@ class mice():
         
         credit_score = list(train_mice['credit_score'].apply(lambda x : min(1000, int(x))))
         existing_loan_amt = list(train_mice['existing_loan_amt'])
+        age_group = list(train_mice['연령대'])
+        work_period = list(train_mice['근속정도'])
         
-        self.df['mice_credit_score'] = credit_score
-        self.df['mice_existing_loan_amt'] = existing_loan_amt
+        df2['mice_credit_score'] = credit_score
+        df2['mice_existing_loan_amt'] = existing_loan_amt
+        df2['age_group'] = age_group
+        df2['work_period'] = work_period
         
-        self.df = self.df.drop(['credit_score','existing_loan_amt','income_per_credit','existing_loan_percent'], axis=1)
+        df2 = df2.drop(['근속정도','연령대','credit_score','existing_loan_amt','income_per_credit','existing_loan_percent'], axis=1)
         
-        self.df['loanamt_per_income'] = self.df['mice_existing_loan_amt'] / (1 + self.df['yearly_income'])
-        self.df['loanamt_per_income'].fillna(0, inplace=True)
+        df2['loanamt_per_income'] = df2['mice_existing_loan_amt'] / (1 + df2['yearly_income'])
+        df2['loanamt_per_income'].fillna(0, inplace=True)
         
-        self.df['income_per_credit'] = self.df['yearly_income'] / self.df['credit_score']
+        df2['income_per_credit'] = df2['yearly_income'] / df2['mice_credit_score']
     
-        return self.df
+        return df2
