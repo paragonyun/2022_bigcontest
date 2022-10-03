@@ -1,8 +1,6 @@
 import pandas as pd
 import os
 from typing import List, Tuple
-from sklearn.utils import resample
-from tqdm import tqdm
 import pickle
 
 class Matcher():
@@ -30,10 +28,7 @@ class Matcher():
         )
         
         self.split_col = 'loanapply_insert_time'
-        self.label_col = 'is_applied'
         self.match_key_col = 'application_id'
-        
-        self.num_down_sampling = 10
     
     
     def _match_loan_cofix(self):
@@ -69,13 +64,13 @@ class Matcher():
         print(f'✅ matched dataset saved at ({save_path})')
     
     
-    def _save_matched_df_list(self, matched_df_list: List[pd.DataFrame], save_file_name: str) -> None:
-        if os.path.exists(self.save_dir) == False:
-            os.makedirs(self.save_dir)
-        save_path = os.path.join(self.save_dir, save_file_name)
-        with open(save_path, 'wb') as f:
-            pickle.dump(matched_df_list, f, pickle.HIGHEST_PROTOCOL)
-        print(f'✅ matched dataset saved at ({save_path})')
+    # def _save_matched_df_list(self, matched_df_list: List[pd.DataFrame], save_file_name: str) -> None:
+    #     if os.path.exists(self.save_dir) == False:
+    #         os.makedirs(self.save_dir)
+    #     save_path = os.path.join(self.save_dir, save_file_name)
+    #     with open(save_path, 'wb') as f:
+    #         pickle.dump(matched_df_list, f, pickle.HIGHEST_PROTOCOL)
+    #     print(f'✅ matched dataset saved at ({save_path})')
     
     
     def run(self, save_mode=True):
