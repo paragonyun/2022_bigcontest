@@ -43,10 +43,13 @@ class Preprocessor():
         return output_df
     
     
-    def _drop_missing_rows(self, input_df: pd.DataFrame) -> pd.DataFrame:
+    def _drop_missing_rows(self, input_df: pd.DataFrame, subset=None) -> pd.DataFrame:
         print('결측치를 가지는 행 삭제 중...')
         output_df = input_df.copy()
-        output_df = input_df.dropna(axis=0)
+        if subset is None:
+            output_df = input_df.dropna(axis=0)
+        else:
+            output_df = input_df.dropna(subset=subset)
         output_df.reset_index(drop=True, inplace=True)
         return output_df
     
