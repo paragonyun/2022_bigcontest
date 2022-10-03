@@ -114,6 +114,8 @@ class  ClusteringPreprocessor() :
     def _scaling(self, df : pd.DataFrame) :
         scale_obj = df.copy()
 
+        fitted_scalers = []
+
 
         for i in self.scalers :
             scaler_name = str(i).split('.')[-1][:-2]
@@ -130,9 +132,10 @@ class  ClusteringPreprocessor() :
             scaler_name.reset_index(inplace=True, drop=True)
 
             self.prep_scaled_dfs.append(scaler_name)
+            fitted_scalers.append(scaler)
         
 
-        return self.prep_scaled_dfs
+        return self.prep_scaled_dfs, fitted_scalers
 
 
     def _feature_selection(self, df_lst) : ## scaled된 DF List 를 가지고 Selection 측정
@@ -287,7 +290,7 @@ class  ClusteringPreprocessor() :
     def run(self)  :
         prep_df = self._basic_preprocessor(self.df)
 
-        prep_scaled_df_lst = self._scaling(prep_df)
+        prep_scaled_df_lst, fitted_scalers = self._scaling(prep_df)
 
         print('Scaling 완료')
 
@@ -303,7 +306,7 @@ class  ClusteringPreprocessor() :
     
             del prep_scaled_df_lst
 
-            return extract_dfs
+            return extract_dfs, fitted_scalers
 
         elif self.selection :
             print('Selection을 시작합니다...')
@@ -314,14 +317,14 @@ class  ClusteringPreprocessor() :
 
             del prep_scaled_df_lst
 
-            return select_dfs
+            return select_dfs, fitted_scalers, prep_df
 
         else :
             self._visualize(prep_scaled_df_lst)
 
 
             print('일반 전처리 결과 DF List를 반환합니다.')
-            return prep_scaled_df_lst
+            return prep_scaled_df_lst, fitted_scalers
     '''
     Example
     1. 그냥 전처리 후의 시각화
