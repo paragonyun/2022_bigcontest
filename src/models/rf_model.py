@@ -76,19 +76,19 @@ class RF():
         
         
     def shap(self, model):
-        test_X = self.test_X
+        val_X = self.val_X
         
         explainer = shap.TreeExplainer(model) 
-        shap_values = explainer.shap_values(test_X)
+        shap_values = explainer.shap_values(val_X)
         
-        shap.summary_plot(shap_values, test_X, plot_type = "bar")
+        shap.summary_plot(shap_values, val_X, plot_type = "bar")
         plt.show()
     
     def permutation_importance(self, model):
         val_X = self.val_X
         val_Y = self.val_Y
         perm = PermutationImportance(model, scoring = "f1", random_state = self.random_state).fit(val_X, val_Y)
-        eli5.show_weights(perm, top = 10, feature_names = val_X.columns.tolist())
+        eli5.show_weights(perm, top = 20, feature_names = val_X.columns.tolist())
         
     def pred_testset(self, test_X, model):
         pred = model.predict(test_X)
