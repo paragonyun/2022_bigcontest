@@ -1,28 +1,34 @@
 from .preprocessor import Preprocessor
 import pandas as pd
+import numpy as np
 
 ## Emcoders
 from sklearn.preprocessing import  OneHotEncoder, OrdinalEncoder 
 
 ## datetime
 from datetime import datetime
+from datetime import date
 
 class User_Preprocessor(Preprocessor):
     
     def __init__(self, dataset: pd.DataFrame, prep_config: dict):
         super().__init__(dataset, prep_config)
+        
+        ## 열 삭제할 cols
+        self.drop_cols = ['gender', 'personal_rehabilitation_complete_yn']
+        
         ## onehot encoder로 바뀔 cols
-        self.onehot_cols = ['gender','income_type','employment_type','houseown_type','purpose',
-                            'personal_rehabilitation_yn','personal_rehabilitation_complete_yn']
+        self.onehot_cols = ['income_type', 'employment_type', 'houseown_type', 'purpose', 'personal_rehabilitation_yn',]
 
         ## ordinal encoder로 바뀔 cols
-        self.ordinal_cols = ['birth_year','yearly_income']
+        self.ordinal_cols = ['birth_year', 'yearly_income']
 
         ## datetime type으로 바뀔 cols
         self.time_cols = ['insert_time', 'company_enter_month', 'birth_year']
 
         ## 범주화될 cols
-        self.categorical_cols = ['birth_year','yearly_income']
+        self.categorical_cols = ['birth_year', 'yearly_income']
+        
 
     def _to_datetime(self, df: pd.DataFrame) -> pd.DataFrame:
         print('datetime으로 바꾸는 중...')
@@ -85,11 +91,10 @@ class User_Preprocessor(Preprocessor):
         ## Birth 카테고리컬 화
         # 이미 생년월일은 datetime type으로 변환된 상태임
         def _calculate_age(x) :
-            this_yaer = datetime.now().year
-            return this_yaer - x.year
-
+            this_year = datetime.now().year
+            return this_year - x.year
         def _birth_category(x) :
-            if 0 <= x < 10 :
+            if x < 10 :
                 return '0대'
             elif 10<= x <20 :
                 return '10대'
@@ -103,19 +108,19 @@ class User_Preprocessor(Preprocessor):
                 return '50대'
             elif 60<= x <70 :
                 return '60대'
+            elif 70<= x:
+                return '70대_이상'
             else :
-                return '70대 이상'
-
+                return np.nan
         output_df = df.copy()
         # 나이로 일단 변환
         output_df['age'] = output_df['birth_year'].apply(lambda x : _calculate_age(x))
-
         # 연령대로 변환
         output_df['age_cat'] = output_df['age'].apply(lambda x : _birth_category(x))
 
+
         ## yearly_income 카테고리 화 
         def _income_category(x) :
-            
             if x < 5510000 :
                 return '1'
             elif 5510000 <= x <18440000 :
@@ -136,13 +141,10 @@ class User_Preprocessor(Preprocessor):
                 return '9'
             elif 128850000 <= x  :
                 return '10'
-
             else :
                 return '0'
-
-
         output_df['yearly_income_cat'] = output_df['yearly_income'].apply(lambda x : _income_category(x))
-
+        
         return output_df
 
     def _to_one_hot(self, df) :
@@ -166,6 +168,7 @@ class User_Preprocessor(Preprocessor):
         ## 그래서 수동으로 그냥 함수 작성해서 apply 해줬습니다.
 
         def _birth_ordinal(x) :
+            
             if x == '0대' :
                 return 0
             elif x == '10대' :
@@ -180,8 +183,10 @@ class User_Preprocessor(Preprocessor):
                 return 5
             elif x == '60대' :
                 return 6
-            else :
+            elif x == '70대_이상' :
                 return 7
+            else :
+                return np.nan
 
         def _income_ordinal(x) :
             if x == '1' :
@@ -209,10 +214,45 @@ class User_Preprocessor(Preprocessor):
 
         output_df['연령대'] = output_df['age_cat'].apply(lambda x : _birth_ordinal(x))
         output_df['소득분위'] = output_df['yearly_income_cat'].apply(lambda x : _income_ordinal(x))
+        
+        ## company_enter_month -> 근속년수로 변환
+        def _company_enter_month_ordinary(x) :
+            
+            if x is None:
+                return 0
+            
+            today = date.today()
+            years_of_service = today.year - x.year
+           
+            if 1 <= years_of_service < 5 :
+                return 1
+            elif 5 <= years_of_service < 10:
+                return 2
+            elif 10 <= years_of_service < 15:
+                return 3
+            elif 15 <= years_of_service < 20 :
+                return 4
+            elif 20 <= years_of_service < 25 :
+                return 5
+            elif 25 <= years_of_service < 30 :
+                return 6
+            elif 30 <= years_of_service < 35 :
+                return 7
+            elif 35 <= years_of_service < 40 :
+                return 8
+            else :
+                return 0
+        output_df['근속정도'] = output_df['company_enter_month'].apply(lambda x : _company_enter_month_ordinary(x))
 
         ## 필요 없는 columns 삭제
-        output_df = output_df.drop(['birth_year', 'age','age_cat'], axis=1)
+        output_df = output_df.drop(['birth_year', 'age', 'age_cat', 'company_enter_month'], axis=1)
 
+        return output_df
+    
+    def _nan2zero(self, input_df: pd.DataFrame) -> pd.DataFrame:
+        output_df = input_df.copy()
+        output_df['existing_loan_cnt'] = output_df['existing_loan_cnt'].fillna(0)
+        output_df['yearly_income'] = output_df['yearly_income'].fillna(0)
         return output_df
 
     def _finalize_df(self, input_df: pd.DataFrame) -> pd.DataFrame:
@@ -221,12 +261,15 @@ class User_Preprocessor(Preprocessor):
         return output_df
 
     def _preprocess(self) -> pd.DataFrame:
-        prep_df = self._to_datetime(self.raw_df) # self.raw_df 는 preprocessor.py 에서 상속받음
-        prep_df = self._value_change(prep_df) ## purpose 내부 값 변환ㄴ
+        prep_df = super()._drop_columns(self.raw_df, self.drop_cols)
+        prep_df = self._to_datetime(prep_df) # self.raw_df 는 preprocessor.py 에서 상속받음
+        prep_df = self._value_change(prep_df) ## purpose 내부 값 변환
         prep_df = self._derived_variable_maker(prep_df) # 파생변수 생성
         prep_df = self._to_categorical(prep_df) # 범주화
         prep_df = self._to_one_hot(prep_df) # 원핫
         prep_df = self._to_ordinal(prep_df) # ordinal
+        prep_df = self._nan2zero(prep_df) # ordinal
+        prep_df = super()._drop_missing_rows(prep_df, ['desired_amount'])
         prep_df = self._finalize_df(prep_df) # 인덱스 리셋
 
         return prep_df
