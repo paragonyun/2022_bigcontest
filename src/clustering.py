@@ -20,6 +20,15 @@ from sklearn.decomposition import PCA
 
 from sklearn.preprocessing import RobustScaler, PowerTransformer, StandardScaler, MinMaxScaler
 
+import gower
+from datetime import datetime
+
+import gc
+
+
+
+
+
 class Clustering ():
     def __init__ (self, df : pd.DataFrame, scaled = False, num_clus = None) :
         self.df = df
@@ -127,7 +136,8 @@ class Clustering ():
             marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
             ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
                         y = pca_2_df.loc[marker_i, 'y_axis'],
-                        label = f'Cluster {i}')
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
 
         ax1.set_title('K-Means Clustering 2D Visualization')
         ax1.legend()
@@ -137,7 +147,8 @@ class Clustering ():
             ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
                         ys= pca_3_df.loc[marker_i, 'y_axis'],
                         zs =  pca_3_df.loc[marker_i, 'z_axis'],
-                        label = f'Cluster {i}')
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
 
         ax2.set_title('K-Means Clustering 3D Visualization')
         ax2.legend()
@@ -183,7 +194,8 @@ class Clustering ():
             marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
             ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
                         y = pca_2_df.loc[marker_i, 'y_axis'],
-                        label = f'Cluster {i}')
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
 
         ax1.set_title('Mean Shift Clustering 2D Visualization')
         ax1.legend()
@@ -193,7 +205,8 @@ class Clustering ():
             ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
                         ys= pca_3_df.loc[marker_i, 'y_axis'],
                         zs =  pca_3_df.loc[marker_i, 'z_axis'],
-                        label = f'Cluster {i}')
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
 
         ax2.set_title('Mean Shift Clustering 3D Visualization')
         ax2.legend()
@@ -239,7 +252,8 @@ class Clustering ():
             marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
             ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
                         y = pca_2_df.loc[marker_i, 'y_axis'],
-                        label = f'Cluster {i}')
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
 
         ax1.set_title('Gaussian Mixture Clustering 2D Visualization')
         ax1.legend()
@@ -249,7 +263,8 @@ class Clustering ():
             ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
                         ys= pca_3_df.loc[marker_i, 'y_axis'],
                         zs =  pca_3_df.loc[marker_i, 'z_axis'],
-                        label = f'Cluster {i}')
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
 
         ax2.set_title('Gaussian Mixture Clustering 3D Visualization')
         ax2.legend()
@@ -296,7 +311,8 @@ class Clustering ():
             marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
             ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
                         y = pca_2_df.loc[marker_i, 'y_axis'],
-                        label = f'Cluster {i}')
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
 
         ax1.set_title('DBSCAN Clustering 2D Visualization')
         ax1.legend()
@@ -306,7 +322,8 @@ class Clustering ():
             ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
                         ys= pca_3_df.loc[marker_i, 'y_axis'],
                         zs =  pca_3_df.loc[marker_i, 'z_axis'],
-                        label = f'Cluster {i}')
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
 
         ax2.set_title('DBSCAN Clustering 3D Visualization')
         ax2.legend()
@@ -370,3 +387,209 @@ class Clustering ():
             self._calculate_scores()
 
             return self.fin_df
+
+
+class GowerDistance :
+    '''
+    I think Gower Distance is fitted to our datas 
+    because output dataset is mixed with continuous values and categorical values..!
+    So I found some distance metric named "gower" and I test it with "DBSCAN"
+    '''
+
+    def __init__ (self, raw_df) :
+        gc.collect()
+
+        self.df = raw_df
+        self.drop_cols = ['application_id', 'user_id', 'insert_time']
+        self.continuous_cols = ['age', 'credit_score', 'yearly_income','service_year',
+                                'desired_amount', 'existing_loan_cnt', 'existing_loan_amt',
+                                'income_per_credit', 'existing_loan_percent']
+    
+
+
+    def _preprocessing(self, df):
+        output_df = df.copy()
+
+        output_df = output_df.drop(self.drop_cols, axis=1)
+
+        ## birth_year와 company_enter_month 전처리 (continuous로 바꿔줌)
+        ## 나이대로 바꾸기
+        output_df['birth_year'] = pd.to_datetime(output_df['birth_year'], format='%Y', errors='ignore')
+        def _calculate_age(x) :
+            this_yaer = datetime.now().year
+            return this_yaer - x.year
+        output_df['age'] = output_df['birth_year'].apply(lambda x : _calculate_age(x))
+        output_df.drop(['birth_year'], axis=1, inplace=True)
+
+        ## 근속년수로 바꾸기
+        def _cuting (x) :
+            return str(x)[:6]
+        output_df['company_enter_month'] =  output_df['company_enter_month'].apply(lambda x : _cuting(x))
+        output_df['company_enter_month'] = pd.to_datetime(output_df['company_enter_month'], format='%Y%m')
+        output_df['service_year'] = output_df['company_enter_month'].apply(lambda x : _calculate_age(x))
+        output_df.drop(['company_enter_month'], axis=1, inplace=True)
+
+        ## 파생변수 만들기
+        # 신용점수 대비 연소득 : 연소득/신용점수
+        output_df['income_per_credit'] = output_df['yearly_income'] / output_df['credit_score']
+
+        # 기대출비율 : 기대출금액 / 연소득
+        output_df['existing_loan_percent'] = output_df['existing_loan_amt'] / output_df['yearly_income']
+
+
+        purpose_dict = {
+            'LIVING' : '생활비',
+            'SWITCHLOAN' : '대환대출',
+            'BUSINESS' : '사업자금',
+            'ETC' : '기타',
+            'HOUSEDEPOSIT' : '전월세보증금',
+            'BUYHOUSE' : '주택구입',
+            'INVEST' : '투자',
+            'BUYCAR' : '자동차구입'
+        }
+
+        gender_dict = {
+            1.0 : 'M',
+            0.0 : 'F'
+        }
+
+        output_df['purpose'] = output_df['purpose'].replace(purpose_dict)
+        output_df['gender'] = output_df['gender'].replace(gender_dict)
+
+        output_df.replace([np.inf, -np.inf], np.nan)
+        print(output_df.columns)
+
+        ## delete missing values and drop cols
+        output_df = output_df.dropna(axis = 0)
+
+        scaler = MinMaxScaler()
+        scaled_values = scaler.fit_transform(output_df[self.continuous_cols])
+        scaled_df = pd.DataFrame(scaled_values, columns = self.continuous_cols)
+
+        ori_df = output_df.drop(self.continuous_cols, axis=1)
+
+
+        output_df_scaled = pd.concat([ori_df, scaled_df], axis=1)    
+
+
+        output_df_scaled.reset_index(drop=True)
+
+        return output_df_scaled
+
+    def _reduce_size(self, df):
+        output_df = df.copy()
+
+        cols = output_df.columns 
+
+        for i in cols :
+            if output_df[i].dtype == 'int64' :
+                output_df = output_df.astype({i : 'int32'})
+            
+            elif output_df[i].dtype == 'float64' :
+                output_df = output_df.astype({i : 'float32'})
+            
+            # elif output_df[i].dtype == 'object' :
+            #     output_df = output_df.astype({i : 'category'})
+
+        return output_df
+
+    def _calculate_distance(self, df) :
+        '''
+        gower distance seems to be not needed to scale the continous values..
+        (I read so many examples.. but all of them did not do scaling..!)
+        '''
+
+        print('Gower Distancce 계산중...')
+
+        output_df = df.copy()
+
+        gower_distance_mat = gower.gower_matrix(output_df)
+
+        return gower_distance_mat
+
+    def _DBSCAN (self, mat) :
+        print('DBSCAN으로 Clustering 중...')
+
+        db = DBSCAN(metric = 'precomputed')
+
+        db.fit(mat)
+
+        self.df['Gower_DB'] = db.labels_
+
+        return self.df
+
+        
+    def _check_clus_result(self, gower_mat : np.matrix, clus_df) : ## input_df should be a gower matrix
+        
+        
+
+        fig = plt.figure(figsize=(12,6))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122, projection='3d')
+
+        pca_2 = PCA(n_components=2)
+        pca_2_transformed = pca_2.fit_transform(gower_mat)
+
+        pca_2_df = pd.DataFrame({'x_axis' : pca_2_transformed[:,0],
+                                'y_axis' : pca_2_transformed[:,1],
+                                'Cluster' : clus_df['Gower_DB']})
+
+        pca_3 = PCA(n_components=3)
+        pca_3_transformed = pca_3.fit_transform(gower_mat)
+        pca_3_df = pd.DataFrame({'x_axis' : pca_3_transformed[:, 0],
+                        'y_axis' : pca_3_transformed[:, 1],
+                        'z_axis' : pca_3_transformed[:, 2],
+                        'Cluster' : clus_df['Gower_DB']})
+
+
+        for i in range(len(pca_2_df['Cluster'].unique())) :
+            marker_i = pca_2_df[pca_2_df['Cluster'] == i].index
+            ax1.scatter(x = pca_2_df.loc[marker_i, 'x_axis'],
+                        y = pca_2_df.loc[marker_i, 'y_axis'],
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
+
+        ax1.set_title('Gower DBSCAN Clustering 2D Visualization')
+        ax1.legend()
+
+        for i in range(len(pca_3_df['Cluster'].unique())) :
+            marker_i = pca_3_df[pca_3_df['Cluster'] == i].index
+            ax2.scatter(xs = pca_3_df.loc[marker_i, 'x_axis'],
+                        ys= pca_3_df.loc[marker_i, 'y_axis'],
+                        zs =  pca_3_df.loc[marker_i, 'z_axis'],
+                        label = f'Cluster {i}',
+                        alpha = 0.3)
+
+        ax2.set_title('Gower DBSCAN Clustering 3D Visualization')
+        ax2.legend()
+
+        plt.savefig(f'./data/Gower Clustering_of{sys._getframe(0).f_code.co_name}.png',
+                    bbox_inches='tight', pad_inches=0)
+
+        plt.show()
+
+        pd.set_option('max_rows', None) 
+
+        clus_df.groupby('Gower_DB').agg(['median', 'mean']).T
+
+    def run(self) :
+        df = self.df
+
+        print(df.shape)
+        # prep_df = self._reduce_size(df)
+
+        prep_df = self._preprocessing(df)
+        print(prep_df.shape)
+        print(prep_df.isnull().sum().sum())
+        
+        del df
+
+        gower_mat = self._calculate_distance(prep_df)
+        clus_df = self._DBSCAN(gower_mat)
+
+        self._check_clus_result(gower_mat, clus_df)
+
+        return clus_df
+
+# class KPrototype :
+
