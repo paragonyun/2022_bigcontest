@@ -403,7 +403,7 @@ class GowerDistance :
         self.drop_cols = ['application_id', 'user_id', 'insert_time']
         self.continuous_cols = ['age', 'credit_score', 'yearly_income','service_year',
                                 'desired_amount', 'existing_loan_cnt', 'existing_loan_amt',
-                                'income_per_credit', 'existing_loan_percent']
+                                ]
     
 
 
@@ -429,12 +429,12 @@ class GowerDistance :
         output_df['service_year'] = output_df['company_enter_month'].apply(lambda x : _calculate_age(x))
         output_df.drop(['company_enter_month'], axis=1, inplace=True)
 
-        ## 파생변수 만들기
-        # 신용점수 대비 연소득 : 연소득/신용점수
-        output_df['income_per_credit'] = output_df['yearly_income'] / output_df['credit_score']
+        # ## 파생변수 만들기
+        # # 신용점수 대비 연소득 : 연소득/신용점수
+        # output_df['income_per_credit'] = output_df['yearly_income'] / output_df['credit_score']
 
-        # 기대출비율 : 기대출금액 / 연소득
-        output_df['existing_loan_percent'] = output_df['existing_loan_amt'] / output_df['yearly_income']
+        # # 기대출비율 : 기대출금액 / 연소득
+        # output_df['existing_loan_percent'] = output_df['existing_loan_amt'] / output_df['yearly_income']
 
 
         purpose_dict = {
@@ -568,28 +568,23 @@ class GowerDistance :
 
         plt.show()
 
-        pd.set_option('max_rows', None) 
+        # pd.set_option('max_rows', None) 
 
-        clus_df.groupby('Gower_DB').agg(['median', 'mean']).T
+        return clus_df.groupby('Gower_DB').agg(['median', 'mean']).T
 
     def run(self) :
         df = self.df
 
-        print(df.shape)
         # prep_df = self._reduce_size(df)
 
-        prep_df = self._preprocessing(df)
-        print(prep_df.shape)
-        print(prep_df.isnull().sum().sum())
-        
-        del df
+        # prep_df = self._preprocessing(df)
 
-        gower_mat = self._calculate_distance(prep_df)
+        gower_mat = self._calculate_distance(df)
         clus_df = self._DBSCAN(gower_mat)
 
-        self._check_clus_result(gower_mat, clus_df)
+        group_by = self._check_clus_result(gower_mat, clus_df)
 
-        return clus_df
+        return clus_df, group_by
 
 # class KPrototype :
 
