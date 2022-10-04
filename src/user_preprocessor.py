@@ -15,10 +15,10 @@ class User_Preprocessor(Preprocessor):
         super().__init__(dataset, prep_config)
         
         ## 열 삭제할 cols
-        self.drop_cols = ['gender', 'personal_rehabilitation_complete_yn']
+        self.drop_cols = ['personal_rehabilitation_complete_yn']
         
         ## onehot encoder로 바뀔 cols
-        self.onehot_cols = ['income_type', 'employment_type', 'houseown_type', 'purpose', 'personal_rehabilitation_yn',]
+        self.onehot_cols = ['gender','income_type', 'employment_type', 'houseown_type', 'purpose', 'personal_rehabilitation_yn',]
 
         ## ordinal encoder로 바뀔 cols
         self.ordinal_cols = ['birth_year', 'yearly_income']
