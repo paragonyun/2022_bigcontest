@@ -285,10 +285,28 @@ class  ClusteringPreprocessor() :
                 plt.savefig(f'./data/Normal_Result_of_{scaler_name}.png')
 
             plt.show()
+
+    def _reduce_size(self, df) :
+        print('Data Size 줄이는 중...')
+        output_df = df.copy()
+
+        cols = output_df.columns 
+
+        for i in cols :
+            if output_df[i].dtype == 'int64' :
+                output_df = output_df.astype({i : 'int8'})
+
+            elif output_df[i].dtype == 'float64' :
+                ## 얘는 혹시 몰라 32로 
+                output_df = output_df.astype({i : 'float32'})
+
+        return output_df
         
 
     def run(self)  :
         prep_df = self._basic_preprocessor(self.df)
+
+        prep_df = self._reduce_size(prep_df)
 
         prep_scaled_df_lst, fitted_scalers = self._scaling(prep_df)
 
@@ -325,6 +343,8 @@ class  ClusteringPreprocessor() :
 
             print('일반 전처리 결과 DF List를 반환합니다.')
             return prep_scaled_df_lst, fitted_scalers
+
+
     '''
     Example
     1. 그냥 전처리 후의 시각화
