@@ -35,7 +35,7 @@ class mice():
         
         df2['mice_credit_score'] = credit_score
         df2['mice_existing_loan_amt'] = existing_loan_amt
-        df2['mice_age_group'] = age_group
+        df2['mice_age_group'] = np.round(age_group, 0)
         
         df2 = df2.drop(['credit_score','new_existing_loan_amt','연령대','income_per_credit','existing_loan_percent'], axis=1)
         
