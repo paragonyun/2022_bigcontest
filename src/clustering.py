@@ -2,6 +2,7 @@
 # 1. df 하나만 보는 거 list로 바꾸기
 
 from os import link
+from random import random
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,6 +26,7 @@ from datetime import datetime
 
 import gc
 
+from kmodes.kprototypes import KPrototypes
 
 
 
@@ -503,7 +505,14 @@ class GowerDistance :
 
         output_df = df.copy()
 
-        gower_distance_mat = gower.gower_matrix(output_df)
+        '''
+        ['gender', 'income_type', 'employment_type', 'houseown_type', 'purpose',
+            'personal_rehabilitation_yn', 'personal_rehabilitation_complete_yn',
+            'age', 'credit_score', 'yearly_income', 'service_year',
+            'desired_amount', 'existing_loan_cnt', 'existing_loan_amt']
+        '''
+        gower_distance_mat = gower.gower_matrix(output_df, cat_features=[True,True,True,True,True,True,True,
+                                                                        False,False,False,False,False,False,False,])
 
         return gower_distance_mat
 
@@ -577,14 +586,133 @@ class GowerDistance :
 
         # prep_df = self._reduce_size(df)
 
-        # prep_df = self._preprocessing(df)
+        prep_df = self._preprocessing(df)
+        print(prep_df.columns)
 
-        gower_mat = self._calculate_distance(df)
+        gower_mat = self._calculate_distance(prep_df)
         clus_df = self._DBSCAN(gower_mat)
 
         group_by = self._check_clus_result(gower_mat, clus_df)
 
         return clus_df, group_by
 
-# class KPrototype :
+class KPrototype :
+    '''
+    Second Way to Clustering mixed dataset!!
+    Easy to use ! I introduce "KPrototype"
+    
+    '''
 
+    def __init__ (self, raw_df) :
+        gc.collect()
+
+        self.df = raw_df
+        self.drop_cols = ['application_id', 'user_id', 'insert_time']
+        self.continuous_cols = ['age', 'credit_score', 'yearly_income','service_year',
+                                'desired_amount', 'existing_loan_cnt', 'existing_loan_amt',
+                                ]
+
+    def _preprocessing(self, df) :
+        output_df = df.copy()
+        output_df = output_df.drop(self.drop_cols, axis=1)
+
+        ## birth_year와 company_enter_month 전처리 (continuous로 바꿔줌)
+        ## 나이대로 바꾸기
+        output_df['birth_year'] = pd.to_datetime(output_df['birth_year'], format='%Y', errors='ignore')
+        def _calculate_age(x) :
+            this_yaer = datetime.now().year
+            return this_yaer - x.year
+        output_df['age'] = output_df['birth_year'].apply(lambda x : _calculate_age(x))
+        output_df.drop(['birth_year'], axis=1, inplace=True)
+
+        ## 근속년수로 바꾸기
+        def _cuting (x) :
+            return str(x)[:6]
+        output_df['company_enter_month'] =  output_df['company_enter_month'].apply(lambda x : _cuting(x))
+        output_df['company_enter_month'] = pd.to_datetime(output_df['company_enter_month'], format='%Y%m')
+        output_df['service_year'] = output_df['company_enter_month'].apply(lambda x : _calculate_age(x))
+        output_df.drop(['company_enter_month'], axis=1, inplace=True)
+
+        # ## 파생변수 만들기
+        # # 신용점수 대비 연소득 : 연소득/신용점수
+        # output_df['income_per_credit'] = output_df['yearly_income'] / output_df['credit_score']
+
+        # # 기대출비율 : 기대출금액 / 연소득
+        # output_df['existing_loan_percent'] = output_df['existing_loan_amt'] / output_df['yearly_income']
+
+
+        purpose_dict = {
+            'LIVING' : '생활비',
+            'SWITCHLOAN' : '대환대출',
+            'BUSINESS' : '사업자금',
+            'ETC' : '기타',
+            'HOUSEDEPOSIT' : '전월세보증금',
+            'BUYHOUSE' : '주택구입',
+            'INVEST' : '투자',
+            'BUYCAR' : '자동차구입'
+        }
+
+        gender_dict = {
+            1.0 : 'M',
+            0.0 : 'F'
+        }
+
+        output_df['purpose'] = output_df['purpose'].replace(purpose_dict)
+        output_df['gender'] = output_df['gender'].replace(gender_dict)
+
+        output_df.replace([np.inf, -np.inf], np.nan)
+        print(output_df.columns)
+
+        ## delete missing values and drop cols
+        output_df = output_df.dropna(axis = 0)
+
+        scaler = MinMaxScaler()
+        scaled_values = scaler.fit_transform(output_df[self.continuous_cols])
+        scaled_df = pd.DataFrame(scaled_values, columns = self.continuous_cols)
+
+        ori_df = output_df.drop(self.continuous_cols, axis=1)
+
+
+        output_df_scaled = pd.concat([ori_df, scaled_df], axis=1)    
+
+
+        output_df_scaled.reset_index(drop=True)
+
+        return output_df_scaled
+
+
+    def _kprototype(self, df) :
+        output_df = df.copy()
+        model = KPrototype(n_clusters = self.n_clus, random_state=42, n_jobs=-1)
+
+        '''
+        ['gender', 'income_type', 'employment_type', 'houseown_type', 'purpose',
+            'personal_rehabilitation_yn', 'personal_rehabilitation_complete_yn',
+            'age', 'credit_score', 'yearly_income', 'service_year',
+            'desired_amount', 'existing_loan_cnt', 'existing_loan_amt']
+        '''
+        cat_features = list(range(0,7))
+        model.fit_predict(output_df, categorical = cat_features)
+
+        self.df['KProto'] = model.labels_
+
+        return self.df
+
+    def _visualize(self, df) :
+        ## TODO
+        return
+
+    def run(self) :
+        ## TODO
+        
+        df = self.df
+
+        # prep_df = self._reduce_size(df)
+
+        prep_df = self._preprocessing(df)
+
+        clus_df = self._kprototype(prep_df)
+
+        # group_by = self._check_clus_result(gower_mat, clus_df)
+
+        # return clus_df, group_by
