@@ -134,3 +134,4 @@ dmypy.json
 *.png
 *.ipynb
 !main_test.ipynb
+!bank.ipynb
