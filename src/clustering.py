@@ -667,7 +667,6 @@ class KPrototype :
         output_df['personal_rehabilitation_complete_yn'] = output_df['personal_rehabilitation_complete_yn'].replace(rehabilitaion_dict)
 
         output_df.replace([np.inf, -np.inf], np.nan)
-        print('전처리 후 Features \n ',output_df.columns)
 
 
         ## delete missing values and drop cols
@@ -689,7 +688,7 @@ class KPrototype :
         output_df_scaled.reset_index(drop=True, inplace=True)
 
 
-        return output_df_scaled
+        return output_df_scaled, output_df
 
 
     def _kprototype(self, df) :
@@ -700,17 +699,24 @@ class KPrototype :
                             n_jobs=-1, verbose=1)
 
         '''
-        ['gender', 'credit_score', 'yearly_income', 'income_type',
-        'employment_type', 'houseown_type', 'desired_amount', 'purpose',
+        ['gender', 'income_type', 'employment_type', 'houseown_type', 'purpose',
         'personal_rehabilitation_yn', 'personal_rehabilitation_complete_yn',
-        'existing_loan_cnt', 'existing_loan_amt', 'age', 'service_year']
+        'age', 'credit_score', 'yearly_income', 'service_year',
+        'desired_amount', 'existing_loan_cnt', 'existing_loan_amt'],
         '''
-
         cat_features_pre = [i for i in output_df.columns if output_df[i].dtype == 'object']
-
-        cat_features = [list(output_df.columns).index(i) for i in cat_features_pre]
+        cat_features_idx = [list(output_df.columns).index(i) for i in cat_features_pre]
+        print(f"\nPreprocessed Data Frame's Columns\n{output_df.columns}\n")
+        print(f'Detected Categorical Features Index are... {cat_features_idx} \n Is it right? [y/n]')
         
-        model.fit_predict(output_df, categorical = cat_features)
+        yn = str(input())
+
+        if yn == 'n' :
+            print(yn)
+            raise Exception('인덱스 코드를 다시 작성하세요')
+        print(yn)
+        print('Start K-Prototype Clustering...')
+        model.fit_predict(output_df, categorical = cat_features_idx)
 
         df['KProto'] = model.labels_
 
@@ -720,6 +726,8 @@ class KPrototype :
         ## KProto 는 cat의 원래 형태를 사용하기 때문에 "거리로써 표현"하는 t-sne나 PCA는 적절하지 않다고 판단했습니다.
         ## 이에 groupby로 평균와 중앙값을 비교하는 형태로 바꿨습니다.
 
+
+
         output_df = df.copy()
 
         return output_df.groupby('KProto').agg(['median', 'mean']).T
@@ -728,10 +736,12 @@ class KPrototype :
     def run(self) :  
         df = self.df
 
-        prep_df = self._preprocessing(df)
+        prep_df, origin_df = self._preprocessing(df)
 
         clus_df = self._kprototype(prep_df)
 
         group_by = self._check_clus_result(clus_df)
 
-        return clus_df, group_by
+        origin_df['KProto'] = clus_df['KProto']
+
+        return origin_df, group_by
