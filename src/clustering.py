@@ -1,6 +1,3 @@
-# TODO
-# 1. df 하나만 보는 거 list로 바꾸기
-
 from os import link
 from random import random
 import pandas as pd
@@ -659,8 +656,15 @@ class KPrototype :
             0.0 : 'F'
         }
 
+        rehabilitaion_dict = {
+            0.0 : "N",
+            1.0 : "Y"
+        }
+
         output_df['purpose'] = output_df['purpose'].replace(purpose_dict)
         output_df['gender'] = output_df['gender'].replace(gender_dict)
+        output_df['personal_rehabilitation_yn'] = output_df['personal_rehabilitation_yn'].replace(rehabilitaion_dict)
+        output_df['personal_rehabilitation_complete_yn'] = output_df['personal_rehabilitation_complete_yn'].replace(rehabilitaion_dict)
 
         output_df.replace([np.inf, -np.inf], np.nan)
         print('전처리 후 Features \n ',output_df.columns)
@@ -692,15 +696,18 @@ class KPrototype :
         print("K-Prototype으로 군집화 중...")
         output_df = df.copy()
         model = KPrototypes(n_clusters=self.n_clus, random_state=42, 
-                            n_jobs=-1, verbose=5)
+
+                            n_jobs=-1, verbose=1)
 
         '''
-        ['gender', 'income_type', 'employment_type', 'houseown_type', 'purpose',
-            'personal_rehabilitation_yn', 'personal_rehabilitation_complete_yn',
-            'age', 'credit_score', 'yearly_income', 'service_year',
-            'desired_amount', 'existing_loan_cnt', 'existing_loan_amt']
+        ['gender', 'credit_score', 'yearly_income', 'income_type',
+        'employment_type', 'houseown_type', 'desired_amount', 'purpose',
+        'personal_rehabilitation_yn', 'personal_rehabilitation_complete_yn',
+        'existing_loan_cnt', 'existing_loan_amt', 'age', 'service_year']
         '''
-        cat_features = list(range(0,7))
+        ## TODO 
+        # for 문으로 columns 돌면서 자동으로 object면 cat_index 넣게 하기
+        cat_features = list(range(1)) + list(range(3,6)) + list(range(7,10)) 
         model.fit_predict(output_df, categorical = cat_features)
 
         df['KProto'] = model.labels_
