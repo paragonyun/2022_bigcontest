@@ -693,7 +693,7 @@ class KPrototype :
 
 
     def _kprototype(self, df) :
-        print("K-Prototype으로 군집화 중...")
+        print(f"K-Prototype으로 군집화 중..., 군집 수 : {self.n_clus}")
         output_df = df.copy()
         model = KPrototypes(n_clusters=self.n_clus, random_state=42, 
 
@@ -705,9 +705,11 @@ class KPrototype :
         'personal_rehabilitation_yn', 'personal_rehabilitation_complete_yn',
         'existing_loan_cnt', 'existing_loan_amt', 'age', 'service_year']
         '''
-        ## TODO 
-        # for 문으로 columns 돌면서 자동으로 object면 cat_index 넣게 하기
-        cat_features = list(range(1)) + list(range(3,6)) + list(range(7,10)) 
+
+        cat_features_pre = [i for i in output_df.columns if output_df[i].dtype == 'object']
+
+        cat_features = [list(output_df.columns).index(i) for i in cat_features_pre]
+        
         model.fit_predict(output_df, categorical = cat_features)
 
         df['KProto'] = model.labels_
