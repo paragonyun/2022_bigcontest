@@ -603,7 +603,7 @@ class KPrototype :
     
     '''
 
-    def __init__ (self, raw_df) :
+    def __init__ (self, raw_df, n_clus = 5) :
         gc.collect()
 
         self.df = raw_df
@@ -612,7 +612,9 @@ class KPrototype :
                                 'desired_amount', 'existing_loan_cnt', 'existing_loan_amt',
                                 ]
 
+        self.n_clus = n_clus
     def _preprocessing(self, df) :
+        print('전처리중...')
         output_df = df.copy()
         output_df = output_df.drop(self.drop_cols, axis=1)
 
@@ -661,29 +663,36 @@ class KPrototype :
         output_df['gender'] = output_df['gender'].replace(gender_dict)
 
         output_df.replace([np.inf, -np.inf], np.nan)
-        print(output_df.columns)
+        print('전처리 후 Features \n ',output_df.columns)
+
 
         ## delete missing values and drop cols
         output_df = output_df.dropna(axis = 0)
 
-        scaler = MinMaxScaler()
+
+        scaler = StandardScaler()
         scaled_values = scaler.fit_transform(output_df[self.continuous_cols])
         scaled_df = pd.DataFrame(scaled_values, columns = self.continuous_cols)
 
+        scaled_df.reset_index(drop=True, inplace=True)
         ori_df = output_df.drop(self.continuous_cols, axis=1)
+        ori_df.reset_index(drop=True, inplace=True)
 
 
         output_df_scaled = pd.concat([ori_df, scaled_df], axis=1)    
 
 
-        output_df_scaled.reset_index(drop=True)
+        output_df_scaled.reset_index(drop=True, inplace=True)
+
 
         return output_df_scaled
 
 
     def _kprototype(self, df) :
+        print("K-Prototype으로 군집화 중...")
         output_df = df.copy()
-        model = KPrototype(n_clusters = self.n_clus, random_state=42, n_jobs=-1)
+        model = KPrototypes(n_clusters=self.n_clus, random_state=42, 
+                            n_jobs=-1, verbose=5)
 
         '''
         ['gender', 'income_type', 'employment_type', 'houseown_type', 'purpose',
@@ -694,25 +703,26 @@ class KPrototype :
         cat_features = list(range(0,7))
         model.fit_predict(output_df, categorical = cat_features)
 
-        self.df['KProto'] = model.labels_
+        df['KProto'] = model.labels_
 
-        return self.df
+        return df
 
-    def _visualize(self, df) :
-        ## TODO
-        return
+    def _check_clus_result(self, df) :
+        ## KProto 는 cat의 원래 형태를 사용하기 때문에 "거리로써 표현"하는 t-sne나 PCA는 적절하지 않다고 판단했습니다.
+        ## 이에 groupby로 평균와 중앙값을 비교하는 형태로 바꿨습니다.
 
-    def run(self) :
-        ## TODO
-        
+        output_df = df.copy()
+
+        return output_df.groupby('KProto').agg(['median', 'mean']).T
+
+
+    def run(self) :  
         df = self.df
-
-        # prep_df = self._reduce_size(df)
 
         prep_df = self._preprocessing(df)
 
         clus_df = self._kprototype(prep_df)
 
-        # group_by = self._check_clus_result(gower_mat, clus_df)
+        group_by = self._check_clus_result(clus_df)
 
-        # return clus_df, group_by
+        return clus_df, group_by
