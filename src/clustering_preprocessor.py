@@ -26,12 +26,7 @@ from FRUFS import FRUFS
 from lightgbm import LGBMClassifier, LGBMRegressor
 
 
-class  ClusteringPreprocessor() :
-    ## TODO
-    '''
-    parameter로 True 값 전달하면 그에 맞춰서 Feature Selection을 하든 
-    Feature Extractin을 하든 어쨋든 그게 가능하게 만들기
-    '''
+class  ClusteringPreprocessor :
 
     def __init__ (self, dataset : pd.DataFrame, selection=False, extraction=False) :
         self.df = dataset
