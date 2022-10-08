@@ -395,7 +395,7 @@ class GowerDistance :
     So I found some distance metric named "gower" and I test it with "DBSCAN"
     '''
 
-    def __init__ (self, raw_df) :
+    def __init__ (self, raw_df, pre_selection=False) :
         gc.collect()
 
         self.df = raw_df
@@ -404,6 +404,50 @@ class GowerDistance :
                                 'desired_amount', 'existing_loan_cnt', 'existing_loan_amt',
                                 ]
     
+        self.selected_cols = ['mice_credit_score', 'mice_existing_loan_amt',
+                            'income_type_EARNEDINCOME','houseown_type_자가']
+
+        self.pre_selection = pre_selection
+
+
+    def _selection_preprocessing(self, df) :
+        '''
+        input : mice df
+        '''
+
+        output_df = df.copy()
+
+        output_df = output_df.loc[:, self.selected_cols]
+
+        output_df.reset_index(drop=True, inplace=True)
+
+        income_type_dict = {
+            1 : 'Y',
+            0 : 'N'
+        }
+
+        houseown_type_dict = {
+            1 : 'Y',
+            0 : 'N'
+        }
+
+        output_df['income_type_EARNEDINCOME'] = output_df['income_type_EARNEDINCOME'].replace(income_type_dict)
+        output_df['houseown_type_자가'] = output_df['houseown_type_자가'].replace(houseown_type_dict)
+
+        con_cols = [i for i in output_df.columns if i != 'income_type_EARNEDINCOME' and i != 'houseown_type_자가']
+
+        scaler = MinMaxScaler()
+        scaled_values = scaler.fit_transform(output_df[con_cols])
+        scaled_df = pd.DataFrame(scaled_values, columns = con_cols)
+
+        ori_df = output_df.drop(con_cols, axis=1)
+
+        output_df_scaled = pd.concat([ori_df, scaled_df], axis=1)    
+
+        output_df_scaled.reset_index(drop=True)
+
+        return output_df_scaled
+
 
 
     def _preprocessing(self, df):
@@ -460,6 +504,7 @@ class GowerDistance :
 
         ## delete missing values and drop cols
         output_df = output_df.dropna(axis = 0)
+        output_df.reset_index(drop=True, inplace=True)
 
         scaler = MinMaxScaler()
         scaled_values = scaler.fit_transform(output_df[self.continuous_cols])
@@ -503,13 +548,9 @@ class GowerDistance :
         output_df = df.copy()
 
         '''
-        ['gender', 'income_type', 'employment_type', 'houseown_type', 'purpose',
-            'personal_rehabilitation_yn', 'personal_rehabilitation_complete_yn',
-            'age', 'credit_score', 'yearly_income', 'service_year',
-            'desired_amount', 'existing_loan_cnt', 'existing_loan_amt']
+
         '''
-        gower_distance_mat = gower.gower_matrix(output_df, cat_features=[True,True,True,True,True,True,True,
-                                                                        False,False,False,False,False,False,False,])
+        gower_distance_mat = gower.gower_matrix(output_df, cat_features=[True, True, False, False])
 
         return gower_distance_mat
 
@@ -581,11 +622,16 @@ class GowerDistance :
     def run(self) :
         df = self.df
 
-        # prep_df = self._reduce_size(df)
+        if self.pre_selection :
+            print('전처리 중...')
+            prep_df = self._selection_preprocessing(df)
 
-        prep_df = self._preprocessing(df)
+        else :
+            prep_df = self._preprocessing(df)
+
         print(prep_df.columns)
 
+        print('Gower Distance 계산중...')
         gower_mat = self._calculate_distance(prep_df)
         clus_df = self._DBSCAN(gower_mat)
 
@@ -600,7 +646,7 @@ class KPrototype :
     
     '''
 
-    def __init__ (self, raw_df, n_clus = 5) :
+    def __init__ (self, raw_df, n_clus = 3) :
         gc.collect()
 
         self.df = raw_df
@@ -671,6 +717,7 @@ class KPrototype :
 
         ## delete missing values and drop cols
         output_df = output_df.dropna(axis = 0)
+        output_df.reset_index(drop=True, inplace=True)
 
 
         scaler = StandardScaler()
