@@ -543,7 +543,7 @@ class GowerDistance :
         (I read so many examples.. but all of them did not do scaling..!)
         '''
 
-        print('Gower Distancce 계산중...')
+        print('Gower Distance 계산중...')
 
         output_df = df.copy()
 
@@ -631,7 +631,7 @@ class GowerDistance :
 
         print(prep_df.columns)
 
-        print('Gower Distance 계산중...')
+        
         gower_mat = self._calculate_distance(prep_df)
         clus_df = self._DBSCAN(gower_mat)
 
