@@ -82,9 +82,10 @@ class ANOVA :
         p_values = []
 
         for i in cols :
-            result = pg.welch_anova(dv =self.clus_col, 
+            result = pg.welch_anova(dv = self.clus_col, 
                                 between = i ,
                                 data = obj_df )
+
             
             p_values.append(result['p-unc'].values[0])
             
