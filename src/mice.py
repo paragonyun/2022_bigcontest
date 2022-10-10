@@ -40,8 +40,11 @@ class mice():
         df2 = df2.drop(['credit_score','new_existing_loan_amt','연령대','income_per_credit','existing_loan_percent'], axis=1)
         
         df2['loanamt_per_income'] = df2['mice_existing_loan_amt'] / (1 + df2['yearly_income'])
+        df2['loanamt_per_income'] = df2['loanamt_per_income'].apply(lambda x : min(0.5, int(x)))
         df2['loanamt_per_income'].fillna(0, inplace=True)
         
         df2['income_per_credit'] = df2['yearly_income'] / (1 + df2['mice_credit_score'])
+        
+        df2['loan_rate_per_cofix_rate'] = df2['loan_rate'] / df2['cofix_rate']
     
         return df2
