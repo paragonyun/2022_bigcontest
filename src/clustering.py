@@ -655,7 +655,7 @@ class KPrototype :
     
     '''
 
-    def __init__ (self, raw_df, n_clus = 3) :
+    def __init__ (self, raw_df, pre_preped = False, n_clus = 3) :
         gc.collect()
 
         self.df = raw_df
@@ -665,6 +665,9 @@ class KPrototype :
                                 ]
 
         self.n_clus = n_clus
+
+        self.pre_preped =pre_preped
+
     def _preprocessing(self, df) :
         print('전처리중...')
         output_df = df.copy()
@@ -752,9 +755,6 @@ class KPrototype :
         output_df = df.copy()
         model = KPrototypes(n_clusters=self.n_clus, random_state=42, n_jobs=-1, verbose=1)
 
-        print(output_df.columns)
-
-
         cat_features_pre = [i for i in output_df.columns if output_df[i].dtype == 'object']
 
         cat_features_idx = [list(output_df.columns).index(i) for i in cat_features_pre]
@@ -788,7 +788,14 @@ class KPrototype :
     def run(self) :  
         df = self.df
 
-        prep_df, origin_df = self._preprocessing(df)
+        if self.pre_preped :
+            print('이미 전처리 된 데이터입니다.')
+            dropped = df.drop(['user_id'], axis=1)
+            prep_df = dropped
+            
+
+        else :
+            prep_df, origin_df = self._preprocessing(df)
 
         clus_df = self._kprototype(prep_df)
 
