@@ -395,7 +395,7 @@ class GowerDistance :
     So I found some distance metric named "gower" and I test it with "DBSCAN"
     '''
 
-    def __init__ (self, raw_df, pre_selection=False) :
+    def __init__ (self, raw_df, my_eps, pre_selection=False) :
         gc.collect()
 
         self.df = raw_df
@@ -408,6 +408,8 @@ class GowerDistance :
                             'income_type_EARNEDINCOME','houseown_type_자가']
 
         self.pre_selection = pre_selection
+
+        self.my_eps=my_eps
 
 
     def _selection_preprocessing(self, df) :
@@ -431,6 +433,13 @@ class GowerDistance :
             0 : 'N'
         }
 
+        rehabilitaion_dict = {
+            0.0 : "N",
+            1.0 : "Y"
+        }
+
+        output_df['personal_rehabilitation_yn'] = output_df['personal_rehabilitation_yn'].replace(rehabilitaion_dict)
+        output_df['personal_rehabilitation_complete_yn'] = output_df['personal_rehabilitation_complete_yn'].replace(rehabilitaion_dict)
         output_df['income_type_EARNEDINCOME'] = output_df['income_type_EARNEDINCOME'].replace(income_type_dict)
         output_df['houseown_type_자가'] = output_df['houseown_type_자가'].replace(houseown_type_dict)
 
@@ -557,7 +566,7 @@ class GowerDistance :
     def _DBSCAN (self, mat) :
         print('DBSCAN으로 Clustering 중...')
 
-        db = DBSCAN(metric = 'precomputed')
+        db = DBSCAN(metric = 'precomputed', eps=self.eps)
 
         db.fit(mat)
 
@@ -650,7 +659,7 @@ class KPrototype :
         gc.collect()
 
         self.df = raw_df
-        self.drop_cols = ['application_id', 'user_id', 'insert_time']
+        self.drop_cols = ['application_id', 'insert_time']
         self.continuous_cols = ['age', 'credit_score', 'yearly_income','service_year',
                                 'desired_amount', 'existing_loan_cnt', 'existing_loan_amt',
                                 ]
@@ -726,6 +735,7 @@ class KPrototype :
 
         scaled_df.reset_index(drop=True, inplace=True)
         ori_df = output_df.drop(self.continuous_cols, axis=1)
+        ori_df = ori_df.drop(['user_id'], axis=1) ## 군집화용에서만 drop
         ori_df.reset_index(drop=True, inplace=True)
 
 
@@ -734,24 +744,19 @@ class KPrototype :
 
         output_df_scaled.reset_index(drop=True, inplace=True)
 
-
         return output_df_scaled, output_df
 
 
     def _kprototype(self, df) :
         print(f"K-Prototype으로 군집화 중..., 군집 수 : {self.n_clus}")
         output_df = df.copy()
-        model = KPrototypes(n_clusters=self.n_clus, random_state=42, 
+        model = KPrototypes(n_clusters=self.n_clus, random_state=42, n_jobs=-1, verbose=1)
 
-                            n_jobs=-1, verbose=1)
+        print(output_df.columns)
 
-        '''
-        ['gender', 'income_type', 'employment_type', 'houseown_type', 'purpose',
-        'personal_rehabilitation_yn', 'personal_rehabilitation_complete_yn',
-        'age', 'credit_score', 'yearly_income', 'service_year',
-        'desired_amount', 'existing_loan_cnt', 'existing_loan_amt'],
-        '''
+
         cat_features_pre = [i for i in output_df.columns if output_df[i].dtype == 'object']
+
         cat_features_idx = [list(output_df.columns).index(i) for i in cat_features_pre]
         print(f"\nPreprocessed Data Frame's Columns\n{output_df.columns}\n")
         print(f'Detected Categorical Features Index are... {cat_features_idx} \n Is it right? [y/n]')
