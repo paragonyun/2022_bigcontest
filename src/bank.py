@@ -68,6 +68,8 @@ class Bank_info():
             'avg_loan_rate_per_cofix_rate': avg_loan_rate_per_cofix_rate_list,
             }).astype(np.float64)
         
+        bank_info_df = bank_info_df.astype({'bank_id':'int64'})
+
         return bank_info_df
     
     
@@ -157,8 +159,9 @@ class Bank_info():
         bank_info_df['bank_label'] = cluster_labels
         scaled_bank_info_df['bank_label'] = cluster_labels
 
-        bank_label_df = pd.DataFrame(bank_info_df.bank_id, bank_info_df.bank_label).reset_index(drop=False)
-        bank_label_match_df = self.match_df.merge(bank_label_df, how='inner', on='bank_id')
+        bank_label_df = pd.DataFrame({'bank_id': bank_info_df.bank_id, 'bank_label': bank_info_df.bank_label})
+        bank_label_df = bank_label_df.astype({'bank_id':'int64', 'bank_label':'int64'})
+        bank_label_match_df = pd.merge(self.match_df, bank_label_df, how='left', on='bank_id')
 
         if plot:
             self._plot_pca_2d(scaled_bank_info_df, cluster_labels)
