@@ -156,8 +156,12 @@ class Bank_info():
         cluster_labels = self._get_cluster_labels(scaled_bank_info_df)
         bank_info_df['bank_label'] = cluster_labels
         scaled_bank_info_df['bank_label'] = cluster_labels
-        self.match_df['bank_label'] = cluster_labels
+
+        bank_label_df = pd.DataFrame(bank_info_df.bank_id, bank_info_df.bank_label).reset_index(drop=False)
+        bank_label_match_df = self.match_df.merge(bank_label_df, how='inner', on='bank_id')
+
         if plot:
             self._plot_pca_2d(scaled_bank_info_df, cluster_labels)
             self._plot_pca_3d(scaled_bank_info_df, cluster_labels)
-        return self.match_df
+
+        return bank_label_match_df, bank_info_df
