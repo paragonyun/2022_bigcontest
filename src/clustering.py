@@ -28,7 +28,7 @@ from kmodes.kprototypes import KPrototypes
 
 
 
-class Clustering ():
+class Clustering :
     def __init__ (self, df : pd.DataFrame, scaled = False, num_clus = None) :
         self.df = df
         self.cluster_models = {'KM' : self._KMeans_clustering,
@@ -399,7 +399,7 @@ class GowerDistance :
         gc.collect()
 
         self.df = raw_df
-        self.drop_cols = ['application_id', 'user_id', 'insert_time']
+        self.drop_cols = ['application_id', 'insert_time']
         self.continuous_cols = ['age', 'credit_score', 'yearly_income','service_year',
                                 'desired_amount', 'existing_loan_cnt', 'existing_loan_amt',
                                 ]
@@ -505,29 +505,37 @@ class GowerDistance :
             0.0 : 'F'
         }
 
+        rehabilitaion_dict = {
+            0.0 : "N",
+            1.0 : "Y"
+        }
+
         output_df['purpose'] = output_df['purpose'].replace(purpose_dict)
         output_df['gender'] = output_df['gender'].replace(gender_dict)
+        output_df['personal_rehabilitation_yn'] = output_df['personal_rehabilitation_yn'].replace(rehabilitaion_dict)
+        output_df['personal_rehabilitation_complete_yn'] = output_df['personal_rehabilitation_complete_yn'].replace(rehabilitaion_dict)
+
 
         output_df.replace([np.inf, -np.inf], np.nan)
-        print(output_df.columns)
 
         ## delete missing values and drop cols
         output_df = output_df.dropna(axis = 0)
         output_df.reset_index(drop=True, inplace=True)
 
-        scaler = MinMaxScaler()
+        # scaler = MinMaxScaler()
+        scaler = StandardScaler()
         scaled_values = scaler.fit_transform(output_df[self.continuous_cols])
         scaled_df = pd.DataFrame(scaled_values, columns = self.continuous_cols)
 
         ori_df = output_df.drop(self.continuous_cols, axis=1)
-
+        ori_df = ori_df.drop(['user_id'], axis=1)
+        ori_df.reset_index(drop=True, inplace=True)
 
         output_df_scaled = pd.concat([ori_df, scaled_df], axis=1)    
 
-
         output_df_scaled.reset_index(drop=True)
 
-        return output_df_scaled
+        return output_df_scaled, output_df
 
     def _reduce_size(self, df):
         output_df = df.copy()
@@ -553,26 +561,39 @@ class GowerDistance :
         '''
 
         print('Gower Distance 계산중...')
-
         output_df = df.copy()
 
-        '''
+        cat_TF = [True if output_df[i].dtype == 'object' else False for i in output_df.columns]
 
-        '''
-        gower_distance_mat = gower.gower_matrix(output_df, cat_features=[True, True, False, False])
+        print('Plz Check they are categorical data..!')
+        print(output_df.columns)
+        print(cat_TF)
 
-        return gower_distance_mat
+        gower_distance_mat = gower.gower_matrix(output_df, cat_features=cat_TF)
 
-    def _DBSCAN (self, mat) :
+        cols = [f'DataPoint_{i}' for i in range(len(gower_distance_mat))]
+
+
+        gower_df = pd.DataFrame(gower_distance_mat, index=cols, columns= cols)
+
+        return gower_df, output_df
+
+    def _DBSCAN (self, mat, ori_df) :
         print('DBSCAN으로 Clustering 중...')
 
-        db = DBSCAN(metric = 'precomputed', eps=self.eps)
+        db = DBSCAN(metric = 'precomputed', eps=self.my_eps)
+
 
         db.fit(mat)
 
-        self.df['Gower_DB'] = db.labels_
+        
 
-        return self.df
+        ori_df['Gower_DB'] = db.labels_
+
+        print('✔파악된 군집')
+        print(ori_df['Gower_DB'].unique())
+
+        return ori_df
 
         
     def _check_clus_result(self, gower_mat : np.matrix, clus_df) : ## input_df should be a gower matrix
@@ -636,13 +657,12 @@ class GowerDistance :
             prep_df = self._selection_preprocessing(df)
 
         else :
-            prep_df = self._preprocessing(df)
-
-        print(prep_df.columns)
+            print('전처리 중...')
+            prep_df, origin_df = self._preprocessing(df)
 
         
         gower_mat = self._calculate_distance(prep_df)
-        clus_df = self._DBSCAN(gower_mat)
+        clus_df = self._DBSCAN(gower_mat, origin_df)
 
         group_by = self._check_clus_result(gower_mat, clus_df)
 
@@ -801,6 +821,12 @@ class KPrototype :
 
         group_by = self._check_clus_result(clus_df)
 
-        origin_df['KProto'] = clus_df['KProto']
+        if self.pre_preped :
+            prep_df['KProto'] = clus_df['KProto']
+            return prep_df, group_by
 
-        return origin_df, group_by
+        else :
+
+            origin_df['KProto'] = clus_df['KProto']
+
+            return origin_df, group_by
