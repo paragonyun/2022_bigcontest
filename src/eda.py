@@ -118,7 +118,7 @@ class EDA():
 
         columns = self.df.columns
 
-        con_cols = [i for i in columns if self.df[i].dtype != 'object' and self.df[i].dtype != 'datetime']
+        con_cols = [i for i in columns if self.df[i].dtype != 'object' and self.df[i].dtype != 'datetime' and self.df[i].dtype != 'category']
 
         print('파악된 연속형 변수\n',con_cols)
 
