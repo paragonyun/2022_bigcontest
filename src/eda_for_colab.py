@@ -30,7 +30,6 @@ class EDA():
         axes = axes.ravel()
 
         print('Checking Distributions...')
-        passed = 0 
 
         for idx, i in tqdm(enumerate(columns)) :
             if self.df[i].dtype == 'int32' :
@@ -52,13 +51,11 @@ class EDA():
                     sns.countplot(self.df[i], ax = axes[idx])
                     axes[idx].set_xticklabels(axes[idx].get_xticklabels(),rotation = 30)
         
-            else : # Datetime인 경우
-                passed += 1
-                continue 
+
 
         print('\nDone!')
 
-        for i in range(1, 3*6 - len(columns) + 1 + passed) :
+        for i in range(1, 3*6 - len(columns) + 1 ) :
             axes[-i].remove()
 
         plt.subplots_adjust(left=0.1, bottom=0.1, 
@@ -97,9 +94,9 @@ class EDA():
         
         print('결측치를 확인합니다...')
 
-        print('칼럼 별 결측치 수')
+        print('👀칼럼 별 결측치 수')
         for col in self.df.columns :
-            print(f'\t ❗ {self.df[col].isnull().sum()}')
+            print(f'\t ❗ {col} : {self.df[col].isnull().sum()}')
 
 
         msno.bar(self.df)
@@ -122,7 +119,7 @@ class EDA():
 
         columns = self.df.columns
 
-        con_cols = [i for i in columns if (self.df[i].dtype == 'int64') or (self.df[i].dtype == 'float')]
+        con_cols = [i for i in columns if self.df[i].dtype != 'object' and self.df[i].dtype != 'datetime']
 
         print('파악된 연속형 변수\n',con_cols)
 
