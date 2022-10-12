@@ -9,7 +9,7 @@ import warnings
 import time
 
 warnings.filterwarnings('ignore')
-# import missingno as msno
+import missingno as msno
 
 class EDA():
     
@@ -30,6 +30,7 @@ class EDA():
         axes = axes.ravel()
 
         print('Checking Distributions...')
+        passed = 0 
 
         for idx, i in tqdm(enumerate(columns)) :
             if self.df[i].dtype == 'int32' :
@@ -51,9 +52,13 @@ class EDA():
                     sns.countplot(self.df[i], ax = axes[idx])
                     axes[idx].set_xticklabels(axes[idx].get_xticklabels(),rotation = 30)
         
+            else : # Datetime인 경우
+                passed += 1
+                continue 
+
         print('\nDone!')
 
-        for i in range(1, 3*6 - len(columns) + 1) :
+        for i in range(1, 3*6 - len(columns) + 1 + passed) :
             axes[-i].remove()
 
         plt.subplots_adjust(left=0.1, bottom=0.1, 
