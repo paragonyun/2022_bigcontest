@@ -63,7 +63,7 @@ class ANOVA :
         self.clus_df = clus_df
         self.clus_col = clus_col 
 
-        self.anova_objs = [i for i in self.clus_df.columns if i != self.clus_col]
+        self.anova_objs = [i for i in self.clus_df.columns if i != self.clus_col and self.clus_df[i].dtype != 'object']
 
 
     def check_anova(self, ) :
