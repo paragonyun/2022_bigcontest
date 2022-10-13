@@ -114,8 +114,6 @@ class EDA():
     def check_outliers(self) :
         print('이상치를 확인합니다...')
 
-        
-
         columns = self.df.columns
 
         con_cols = [i for i in columns if self.df[i].dtype != 'object' and self.df[i].dtype != 'datetime' and self.df[i].dtype != 'category']
