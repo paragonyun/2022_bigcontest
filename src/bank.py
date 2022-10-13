@@ -162,6 +162,8 @@ class Bank_info():
         bank_label_df = pd.DataFrame({'bank_id': bank_info_df.bank_id, 'bank_label': bank_info_df.bank_label})
         bank_label_df = bank_label_df.astype({'bank_id':'int64', 'bank_label':'int64'})
         bank_label_match_df = pd.merge(self.match_df, bank_label_df, how='left', on='bank_id')
+        bank_label_match_df = pd.get_dummies(bank_label_match_df, columns = ['bank_label'])
+        
 
         if plot:
             self._plot_pca_2d(scaled_bank_info_df, cluster_labels)
