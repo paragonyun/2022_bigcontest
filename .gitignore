@@ -135,3 +135,6 @@ dmypy.json
 *.ipynb
 !main_test.ipynb
 !bank.ipynb
+!modeling.ipynb
+!eda.ipynb
+!clustering.ipynb
