@@ -47,34 +47,27 @@ class Clustering :
 
     def _scaling(self, input_df) :
         print('스케일링 진행 중...')
-        
-        '''
-        이상하게 inf 값이 섞여있더라구요.. 일단 제외를 시키는 함수입니다.
-        무엇이 inf값을 가지는지 파악하고 대체값을 넣고 하겠습니다.
-        '''
+
         def clean_dataset(df):
             assert isinstance(df, pd.DataFrame), "df needs to be a pd.DataFrame"
+
             df.replace([np.inf, -np.inf], np.nan, inplace=True)
             df.dropna(inplace=True)
             indices_to_keep = ~df.isin([np.nan, np.inf, -np.inf]).any(1)
             return df[indices_to_keep].astype(np.float64)
 
-
         scale_obj = input_df.copy()
-
 
         print('스케일링 전 : ', scale_obj.shape)
 
         scale_obj = scale_obj.drop(self.drop_cols, axis=1)
 
         scale_obj = clean_dataset(scale_obj).reset_index()
-        
 
         ss = StandardScaler()
 
         transed = ss.fit_transform(scale_obj)
         
-
         print('스케일링 후 : ', scale_obj.shape)
 
         scaled_df = pd.DataFrame(transed, columns = scale_obj.columns)
@@ -108,8 +101,6 @@ class Clustering :
         model = KMeans(n_clusters = self.num_clus, init = 'k-means++')
         model.fit_predict(output_df)
 
-        ## 이 output_df에 저장된 결과로 각 모델별로 시각화도 시키고
-        ## 나중에 이 결과들을 모아서 Hard Voting도 시킬 거임
         output_df['KMeans'] = model.labels_
 
         fig = plt.figure(figsize=(12,6))
@@ -363,12 +354,12 @@ class Clustering :
     def run(self) :
         if self.scaled :
             self.cluster_models['KM'](self.df)
-            # self.cluster_models['MS'](self.df)
-            # self.cluster_models['DB'](self.df)
+            self.cluster_models['MS'](self.df)
+            self.cluster_models['DB'](self.df)
             self.cluster_models['GM'](self.df)
-            # self.cluster_models['HI'](self.df)
+            self.cluster_models['HI'](self.df)
             
-            # self._calculate_scores()
+            self._calculate_scores()
 
             return self.fin_df
 
@@ -393,6 +384,8 @@ class GowerDistance :
     I think Gower Distance is fitted to our datas 
     because output dataset is mixed with continuous values and categorical values..!
     So I found some distance metric named "gower" and I test it with "DBSCAN"
+
+    But this class was not used the visualization result was not good... ㅠㅠ
     '''
 
     def __init__ (self, raw_df, my_eps, pre_selection=False) :
@@ -481,14 +474,6 @@ class GowerDistance :
         output_df['service_year'] = output_df['company_enter_month'].apply(lambda x : _calculate_age(x))
         output_df.drop(['company_enter_month'], axis=1, inplace=True)
 
-        # ## 파생변수 만들기
-        # # 신용점수 대비 연소득 : 연소득/신용점수
-        # output_df['income_per_credit'] = output_df['yearly_income'] / output_df['credit_score']
-
-        # # 기대출비율 : 기대출금액 / 연소득
-        # output_df['existing_loan_percent'] = output_df['existing_loan_amt'] / output_df['yearly_income']
-
-
         purpose_dict = {
             'LIVING' : '생활비',
             'SWITCHLOAN' : '대환대출',
@@ -514,7 +499,6 @@ class GowerDistance :
         output_df['gender'] = output_df['gender'].replace(gender_dict)
         output_df['personal_rehabilitation_yn'] = output_df['personal_rehabilitation_yn'].replace(rehabilitaion_dict)
         output_df['personal_rehabilitation_complete_yn'] = output_df['personal_rehabilitation_complete_yn'].replace(rehabilitaion_dict)
-
 
         output_df.replace([np.inf, -np.inf], np.nan)
 
@@ -583,10 +567,7 @@ class GowerDistance :
 
         db = DBSCAN(metric = 'precomputed', eps=self.my_eps)
 
-
         db.fit(mat)
-
-        
 
         ori_df['Gower_DB'] = db.labels_
 
@@ -594,11 +575,8 @@ class GowerDistance :
         print(ori_df['Gower_DB'].unique())
 
         return ori_df
-
         
     def _check_clus_result(self, gower_mat : np.matrix, clus_df) : ## input_df should be a gower matrix
-        
-        
 
         fig = plt.figure(figsize=(12,6))
         ax1 = fig.add_subplot(121)
@@ -645,8 +623,7 @@ class GowerDistance :
 
         plt.show()
 
-        # pd.set_option('max_rows', None) 
-
+        # pd.set_option('max_rows', None)
         return clus_df.groupby('Gower_DB').agg(['median', 'mean']).T
 
     def run(self) :
@@ -710,14 +687,6 @@ class KPrototype :
         output_df['service_year'] = output_df['company_enter_month'].apply(lambda x : _calculate_age(x))
         output_df.drop(['company_enter_month'], axis=1, inplace=True)
 
-        # ## 파생변수 만들기
-        # # 신용점수 대비 연소득 : 연소득/신용점수
-        # output_df['income_per_credit'] = output_df['yearly_income'] / output_df['credit_score']
-
-        # # 기대출비율 : 기대출금액 / 연소득
-        # output_df['existing_loan_percent'] = output_df['existing_loan_amt'] / output_df['yearly_income']
-
-
         purpose_dict = {
             'LIVING' : '생활비',
             'SWITCHLOAN' : '대환대출',
@@ -751,7 +720,6 @@ class KPrototype :
         output_df = output_df.dropna(axis = 0)
         output_df.reset_index(drop=True, inplace=True)
 
-
         scaler = StandardScaler()
         scaled_values = scaler.fit_transform(output_df[self.continuous_cols])
         scaled_df = pd.DataFrame(scaled_values, columns = self.continuous_cols)
@@ -760,7 +728,6 @@ class KPrototype :
         ori_df = output_df.drop(self.continuous_cols, axis=1)
         ori_df = ori_df.drop(['user_id'], axis=1) ## 군집화용에서만 drop
         ori_df.reset_index(drop=True, inplace=True)
-
 
         output_df_scaled = pd.concat([ori_df, scaled_df], axis=1)    
 
@@ -797,8 +764,6 @@ class KPrototype :
     def _check_clus_result(self, df) :
         ## KProto 는 cat의 원래 형태를 사용하기 때문에 "거리로써 표현"하는 t-sne나 PCA는 적절하지 않다고 판단했습니다.
         ## 이에 groupby로 평균와 중앙값을 비교하는 형태로 바꿨습니다.
-
-
 
         output_df = df.copy()
 
