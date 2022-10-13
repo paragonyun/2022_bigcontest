@@ -10,6 +10,8 @@ import numpy as np
 import seaborn as sns
 import eli5
 from eli5.sklearn import PermutationImportance
+from sklearn.inspection import permutation_importance
+import joblib
 
 
 
@@ -41,13 +43,13 @@ class LGBM():
         def evaluate_macroF1_lgb(y_true, y_pred):  
             y_pred_label = np.round(y_pred)
             f1 = f1_score(y_true, y_pred_label, average='macro')
-            print('f1 score:', f1)
+            # print('f1 score:', f1)
             return ('f1_score', f1, True)
         
         
         lgbm = LGBMClassifier()
-        lgbm_grid = RandomizedSearchCV(lgbm, param_distributions= params, n_iter=3, scoring="f1", cv=3, refit=True, random_state=self.random_state)
-        lgbm_grid.fit(train_X, train_Y, early_stopping_rounds=50, eval_metric=evaluate_macroF1_lgb, eval_set=[(val_X, val_Y)])
+        lgbm_grid = RandomizedSearchCV(lgbm, param_distributions= params, n_iter=3, scoring="f1", cv=3, refit=True,verbose=0, random_state=self.random_state)
+        lgbm_grid.fit(train_X, train_Y, early_stopping_rounds=50, eval_metric=evaluate_macroF1_lgb, eval_set=[(val_X, val_Y)], verbose=False)
         
         print('best parameters : ', lgbm_grid.best_params_)
         print('best val score : ', round(lgbm_grid.best_score_, 4))
@@ -55,6 +57,14 @@ class LGBM():
         best_model = lgbm_grid.best_estimator_
         
         return best_model
+    
+    def model_train(self):
+        print('✅ model_train')
+        LGBM_model = LGBMClassifier(n_estimators=4000, max_depth=9, learning_rate=0.1, random_state=self.random_state)
+        LGBM_model.fit(self.train_X, self.train_Y)
+        
+        # joblib.dump(LGBM_model, "models/saved_model/rf_model.pkl")
+        return LGBM_model
     
     def val_score(self, model):
         val_X = self.val_X
@@ -64,6 +74,7 @@ class LGBM():
         F1_score = f1_score(val_Y, pred, average='macro', labels=np.unique(pred))
         print("f1_score: ", F1_score)
         print(classification_report(val_Y, pred))
+        return F1_score
         
     def confusion_matrix(self, model):
         val_X = self.val_X
@@ -100,14 +111,30 @@ class LGBM():
         plt.show()
         
     def permutation_importance(self, model):
+        print('✅ permutation_importance')
         val_X = self.val_X
         val_Y = self.val_Y
-        perm = PermutationImportance(model, scoring = "f1", random_state = self.random_state).fit(val_X, val_Y)
-        eli5.show_weights(perm, top = 20, feature_names = val_X.columns.tolist())
+       
+        perm_imp = PermutationImportance(model, scoring='f1')
+        perm_imp.fit(val_X, val_Y)
+        # 순열 중요도 데이터 프레임 생성
+        perm_imp_df = pd.DataFrame()
+        feature = val_X.columns
+        perm_imp_df["feature"] = feature
+        perm_imp_df["importance"] = perm_imp.feature_importances_
+        perm_imp_df.sort_values(by='importance', ascending=False, inplace=True)
+        perm_imp_df.reset_index(drop=True, inplace=True)
+        perm_imp_df
+        
+        plt.figure(figsize=(10,8))
+
+        sns.barplot(x='importance', y='feature', data=perm_imp_df)
+        plt.title('permutation importance', fontsize=18)
+
+        plt.show()
         
     def pred_testset(self, test_X, model):
         pred = model.predict(test_X)
-        test_X['is_applied'] = pred
-        return test_X
+        return pred
         
         
