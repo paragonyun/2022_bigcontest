@@ -99,7 +99,7 @@ class Bank_info():
             data=printcipal_components,
             columns = ['p_component_1', 'p_component_2']
             )
-        principal_df['label'] = ori_cluster_labels
+        principal_df['bank_label'] = ori_cluster_labels
         fig = plt.figure(figsize = (8, 8))
         ax = fig.add_subplot(1, 1, 1)
         ax.set_xlabel('p_component_1', fontsize = 15)
@@ -109,7 +109,7 @@ class Bank_info():
         labels = [0, 1, 2]
         colors = ['r', 'g', 'b']
         for label, color in zip(labels, colors):
-            label_idx = bank_info_df['label'] == label
+            label_idx = bank_info_df['bank_label'] == label
             ax.scatter(
                 principal_df.loc[label_idx, 'p_component_1'],
                 principal_df.loc[label_idx, 'p_component_2'],
@@ -130,14 +130,14 @@ class Bank_info():
             data=printcipal_components,
             columns = ['p_component_1', 'p_component_2', 'p_component_3'],
             )
-        principal_df['label'] = ori_cluster_labels
+        principal_df['bank_label'] = ori_cluster_labels
         total_var = pca.explained_variance_ratio_.sum() * 100
         fig = px.scatter_3d(
             principal_df,
             x='p_component_1',
             y='p_component_2',
             z='p_component_3',
-            color='label',
+            color='bank_label',
             title=f'Total Explained Variance: {total_var:.2f}%',
             labels={'0': 'p_component_1', '1': 'p_component_2', '2': 'p_component_3'}
         )
@@ -162,11 +162,11 @@ class Bank_info():
         bank_label_df = pd.DataFrame({'bank_id': bank_info_df.bank_id, 'bank_label': bank_info_df.bank_label})
         bank_label_df = bank_label_df.astype({'bank_id':'int64', 'bank_label':'int64'})
         bank_label_match_df = pd.merge(self.match_df, bank_label_df, how='left', on='bank_id')
-        bank_label_match_df = pd.get_dummies(bank_label_match_df, columns = ['bank_label'])
         
-
         if plot:
             self._plot_pca_2d(scaled_bank_info_df, cluster_labels)
             self._plot_pca_3d(scaled_bank_info_df, cluster_labels)
+        
+        bank_label_match_df = pd.get_dummies(bank_label_match_df, columns = ['bank_label'])
 
         return bank_label_match_df, bank_info_df
