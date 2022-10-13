@@ -1,25 +1,21 @@
+## Base imports
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import sys
+from datetime import datetime
 import warnings 
 warnings.filterwarnings('ignore')
 
 ## Emcoders
 from sklearn.preprocessing import  OneHotEncoder, OrdinalEncoder 
 
-## datetime
-from datetime import datetime
-
+## Preprocessor
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, PowerTransformer
 
+## PCA
 from sklearn.decomposition import PCA
-
-## Feature Selection
-# from sklearn.feature_selection import SelectKBest, f_classif, mutual_info_classif, RFE
-# from sklearn.ensemble import ExtraTreesClassifier
-
 
 ## Feature Selection
 from FRUFS import FRUFS
@@ -54,7 +50,6 @@ class  ClusteringPreprocessor :
 
         ## 필요 없는 칼럼 제거
         output_df = output_df.drop(self.drop_cols, axis=1)
-
 
         ## 나이대로 바꾸기
         output_df['birth_year'] = pd.to_datetime(output_df['birth_year'], format='%Y', errors='ignore')
@@ -96,12 +91,6 @@ class  ClusteringPreprocessor :
             output_df = pd.concat([output_df.drop(columns=[i]),
                                 ohe_df], axis=1)
 
-        # ## 결측치 전부 drop
-        # print('결측치 제거 전 : ', output_df.isnull().sum().sum())
-        # output_df.replace([np.inf, -np.inf], np.nan, inplace=True)
-        # output_df.dropna(inplace=True)
-        # print('결측치 제거 후 : ', output_df.isnull().sum().sum())
-
         output_df = output_df.reset_index(drop=True)
 
         return output_df
@@ -111,7 +100,6 @@ class  ClusteringPreprocessor :
 
         fitted_scalers = []
 
-
         for i in self.scalers :
             scaler_name = str(i).split('.')[-1][:-2]
             scaler = i()
@@ -120,16 +108,13 @@ class  ClusteringPreprocessor :
 
             ori_df = scale_obj.drop(self.continuous_cols, axis=1)
 
-
             scaler_name = pd.concat([ori_df, scaled_df], axis=1)
-
 
             scaler_name.reset_index(inplace=True, drop=True)
 
             self.prep_scaled_dfs.append(scaler_name)
             fitted_scalers.append(scaler)
         
-
         return self.prep_scaled_dfs, fitted_scalers
 
 
@@ -165,9 +150,6 @@ class  ClusteringPreprocessor :
             selected_df = model.fit_transform(df)
 
             print('Selected Columns\n', selected_df.columns)
-
-            # 이거 하면 XGBoost 스타일로 그려줍니다. 지금은 필요 없을 거 같아서 Pass
-            # model.feature_importance()
 
             select_dfs.append(selected_df)
 
