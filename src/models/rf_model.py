@@ -46,7 +46,7 @@ class RF():
     
     def model_train(self):
         print('✅ model_train')
-        rf_model = RandomForestClassifier(n_estimators=2000, max_depth=7, min_samples_leaf=10, random_state=self.random_state)
+        rf_model = RandomForestClassifier(n_estimators=2000, max_depth=7, min_samples_leaf=10, random_state=self.random_state, n_jobs=-1)
         rf_model.fit(self.train_X, self.train_Y)
         
         # joblib.dump(rf_model, "models/saved_model/rf_model.pkl")
@@ -93,6 +93,8 @@ class RF():
         val_X = self.val_X
         
         explainer = shap.TreeExplainer(model) 
+        #explainer = shap.GPUTreeExplainer(model) 
+        
         shap_values = explainer.shap_values(val_X)
         
         shap.summary_plot(shap_values, val_X, plot_type = "bar")
@@ -124,4 +126,4 @@ class RF():
     def pred_testset(self, test_X, model):
         pred = model.predict(test_X)
         test_X['is_applied'] = pred
-        return test_X
+        return pred
