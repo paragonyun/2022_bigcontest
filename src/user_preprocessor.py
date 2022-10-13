@@ -223,7 +223,7 @@ class User_Preprocessor(Preprocessor):
             
             today = date.today()
             years_of_service = today.year - x.year
-           
+
             if 1 <= years_of_service < 5 :
                 return 1
             elif 5 <= years_of_service < 10:
